@@ -4,7 +4,7 @@
 		module="sag_animals_knowledge$sources_2.12"
 		revision="0.1"
 		status="integration"
-		publication="20190111012744"
+		publication="20190112115556"
 	/>
 	<configurations>
 		<conf name="default" visibility="public" description=""/>
