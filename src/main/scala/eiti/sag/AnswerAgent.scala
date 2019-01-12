@@ -8,5 +8,9 @@ import scala.language.postfixOps
 import scala.concurrent.Await
 
 class AnswerAgent extends Actor {
+  val log = Logging(context.system, this)
 
+  def receive = {
+    case _      ⇒ log.info("received unknown message")
+  }
 }
