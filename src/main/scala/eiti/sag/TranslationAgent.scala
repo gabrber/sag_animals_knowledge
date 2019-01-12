@@ -18,6 +18,13 @@ class TranslationAgent extends Actor {
     return animal
   }
 
+  def getInfoType(animal:String): String = {
+    println("What do you want to know about " + animal + "?")
+    var infoType = scala.io.StdIn.readLine()
+    println("Okay. Looking for " + infoType)
+    return infoType
+  }
+
   // Choose one Agent with name matching pattern
   def choseOneAgent(patternName:String): ActorRef = {
     var test = context.actorSelection("akka://AnimalsKnowledgeBase/user/" + patternName + "*").resolveOne(5 second)
@@ -35,6 +42,7 @@ class TranslationAgent extends Actor {
   def receive = {
     case "greetings" ⇒
       var animal = greetings()
+      var infoType = getInfoType(animal)
       //choseAllAgents("KnowledgeAgent") ! "hi"
       choseOneAgent("KnowledgeAgent") ! animal
     case _      ⇒ log.info("received unknown message")
