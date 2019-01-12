@@ -12,7 +12,7 @@ object MainApp extends App {
   //greetings()
   val system = ActorSystem("AnimalsKnowledgeBase")
   val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
-  val KnowledgeAgent1 = system.actorOf(Props[KnowledgeAgent], name = "KnowledgeAgent1")
+  val KnowledgeAgent1 = system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgent1")
   val KnowledgeAgent2 = system.actorOf(Props[KnowledgeAgent], name = "KnowledgeAgent2")
 
   val future = TranslationAgent1 ! "greetings"

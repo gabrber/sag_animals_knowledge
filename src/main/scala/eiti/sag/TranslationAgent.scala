@@ -44,7 +44,7 @@ class TranslationAgent extends Actor {
       var animal = greetings()
       var infoType = getInfoType(animal)
       //choseAllAgents("KnowledgeAgent") ! "hi"
-      choseOneAgent("KnowledgeAgent") ! animal
+      choseAllAgents("KnowledgeAgent") ! animal
     case _      ⇒ log.info("received unknown message")
   }
 }
