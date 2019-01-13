@@ -15,10 +15,13 @@ object MainApp extends App {
   val KnowledgeAgent1 = system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgent1")
   val KnowledgeAgent2 = system.actorOf(Props[KnowledgeAgent], name = "KnowledgeAgent2")
   val KnowledgeAgentWikipedia = system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
+  val AnimalSpeciesNamesProvider = system.actorOf(Props[AnimalSpeciesNamesProvider], name = "AnimalSpeciesNamesProvider")
 
   val future = TranslationAgent1 ! "greetings"
 
   KnowledgeAgentWikipedia ! "tiger"
+
+  AnimalSpeciesNamesProvider ! "fetch"
 
 
 }
