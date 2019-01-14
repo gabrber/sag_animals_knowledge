@@ -1,16 +1,45 @@
 package eiti.sag
 
-import java.io.{BufferedWriter, File, FileWriter}
+import java.io._
 import java.net.URLEncoder
 
+import eiti.sag.query.{QueryType, UsersQueryInstance}
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
+import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
+import opennlp.tools.tokenize.{TokenizerME, TokenizerModel}
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element, Node, TextNode}
 import org.jsoup.select.NodeVisitor
 
+import scala.io.Source
+
 class KnowledgeAgentWikipedia extends KnowledgeAgent {
 
+  val knowledgeBaseSep = ";"
+
+  val locationModelFile = "database/en-ner-location.bin"
+  val tokenModelFile = "database/en-token.bin"
   val HEURISTIC_CONTENT_LENGTH_THRESHOLD = 100
+
+  // FIXME - to nie jest fault tolerant
+  var animalsLearnedAbout: List[String] = List()
+
+  override def receive = {
+    case animal: String =>
+      val pageContent = fetchContent(animal)
+      persistAsBagOfWords(pageContent, animal)
+      persistAsNERTokens(pageContent, animal)
+
+      animalsLearnedAbout = animal :: animalsLearnedAbout
+
+      // FIXME mocked :(
+      self ! UsersQueryInstance("Where does " + animal + " live?", QueryType.Location)
+
+    case usersQueryInstance: UsersQueryInstance =>
+      searchKnowledgeAndSendAnswer(usersQueryInstance)
+
+    case _      ⇒ log.info("received unknown message")
+  }
 
   def fetchContent(pageTitle: String): String = {
     val url = "https://en.wikipedia.org/wiki/" + URLEncoder.encode(pageTitle, "UTF-8")
@@ -23,6 +52,105 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
     doc.traverse(new MyNodeVisitor(sb))
 
     sb.toString()
+  }
+
+  def persistAsBagOfWords(pageContent: String, animal: String) = {
+    val wordsCounted = pageContent.split(" ")
+      .map(p => p.trim.toLowerCase)
+      .filter(p => p != "")
+      .groupBy((word: String) => word)
+      .mapValues(_.length)
+
+    // TODO - encode filename
+    val file = new File("animal_db/wikipedia_bag_of_words/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+    for (elem <- wordsCounted.keys) {
+      bw.write(elem + knowledgeBaseSep + wordsCounted(elem) + "\n")
+    }
+  }
+
+  def persistAsNERTokens(pageContent: String, animal: String): Unit = {
+
+    println("Loading model ...")
+
+    val bis = new BufferedInputStream(new FileInputStream(locationModelFile))
+
+    val model = new TokenNameFinderModel(bis)
+
+    val nameFinder = new NameFinderME(model)
+
+    println("Model loaded. Tokenizing ...")
+
+    val tokens = tokenize(pageContent)
+
+    val nameSpans = nameFinder.find(tokens)
+
+    val locationToCertaintyMap =
+      for(ns <- nameSpans) yield {
+        val substring: String = tokens.slice(ns.getStart, ns.getEnd).mkString(" ")
+        val prob: Double = ns.getProb
+        val entityType = ns.getType
+
+        (substring, prob)
+      }
+
+    val locationToWeightedCertaintyMap = locationToCertaintyMap
+      .groupBy(_._1)
+      .mapValues(_.map(_._2).sum)
+
+    val file = new File("animal_db/wikipedia_ner/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+    for (elem <- locationToWeightedCertaintyMap.keys) {
+      bw.write(elem + knowledgeBaseSep + locationToWeightedCertaintyMap(elem) + "\n")
+    }
+    bw.close()
+  }
+
+  def searchKnowledgeAndSendAnswer(usersQueryInstance: UsersQueryInstance): Unit = {
+
+    if(usersQueryInstance.parsedType.equals(QueryType.Location)) {
+      findLocationUsingNERTags(usersQueryInstance)
+    } else {
+      println("Sorry, cant answer")
+    }
+  }
+
+  def findLocationUsingNERTags(usersQueryInstance: UsersQueryInstance): Unit = {
+
+    def extractAnimal(query: String): String = {
+      for (elem <- animalsLearnedAbout) {
+        if(query.contains(elem)) {
+          return elem
+        }
+      }
+      null
+    }
+
+    val animal = extractAnimal(usersQueryInstance.originalQuery)
+    if(animal == null) {
+      println("Query: " + usersQueryInstance + ". Didnot find answer :(")
+      return
+    }
+
+    // FIXME mocked :(
+    // możnaby trzymać gdzieś listę zwierząt, o których się nauczyliśmy, i przeszukiwać pytanie pod tym kątem
+    val file = new File("animal_db/wikipedia_ner/" + animal + ".txt")
+    val content = Source.fromFile("animal_db/wikipedia_ner/" + animal + ".txt").mkString
+    val mostCertainLocation = content.split("\n").filter(line => !line.isEmpty).map(line => {
+      val word = line.split(knowledgeBaseSep)(0)
+      val certainty = line.split(knowledgeBaseSep)(1).toDouble
+      (word, certainty)
+    }).maxBy(_._2)._1
+
+    println("Query: " + usersQueryInstance.originalQuery + ". Found answer: " + mostCertainLocation)
+  }
+
+  @throws[IOException]
+  def tokenize(sentence: String): Array[String] = {
+    val bis = new BufferedInputStream(new FileInputStream(tokenModelFile))
+    val tokenModel = new TokenizerModel(bis)
+    val tokenizer = new TokenizerME(tokenModel)
+    tokenizer.tokenize(sentence)
   }
 
   class MyNodeVisitor(stringBuilder: StringBuilder) extends NodeVisitor {
@@ -46,23 +174,5 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
         }
       }
     }
-  }
-
-  override def receive = {
-    case animal: String =>
-      var pageContent = fetchContent(animal)
-      println(pageContent)
-      val wordsCounted = pageContent.split(" ")
-        .map(p => p.trim.toLowerCase)
-        .filter(p => p != "")
-        .groupBy((word: String) => word)
-        .mapValues(_.length)
-
-      val file = new File("animal_db/wikipedia_bag_of_words/" + animal + ".txt")
-      val bw = new BufferedWriter(new FileWriter(file))
-      for (elem <- wordsCounted.keys) {
-        bw.write(elem + " " + wordsCounted(elem) + "\n")
-      }
-    case _      ⇒ log.info("received unknown message")
   }
 }

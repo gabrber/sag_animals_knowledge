@@ -20,6 +20,11 @@ object MainApp extends App {
   val future = TranslationAgent1 ! "greetings"
 
   KnowledgeAgentWikipedia ! "tiger"
+  KnowledgeAgentWikipedia ! "whale"
+  KnowledgeAgentWikipedia ! "panda"
+  KnowledgeAgentWikipedia ! "koala"
+  KnowledgeAgentWikipedia ! "bee"
+  KnowledgeAgentWikipedia ! "hyena"
 
   AnimalSpeciesNamesProvider ! "fetch"
 

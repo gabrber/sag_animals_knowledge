@@ -13,3 +13,4 @@ libraryDependencies ++= Seq(
 libraryDependencies += "net.ruippeixotog" %% "scala-scraper" % "2.1.0"
 libraryDependencies += "org.jsoup" % "jsoup" % "1.9.1"
 libraryDependencies += "com.google.code.gson" % "gson" % "2.8.5"
+libraryDependencies += "org.apache.opennlp" % "opennlp-tools" % "1.9.0"
