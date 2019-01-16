@@ -97,7 +97,12 @@ class KnowledgeAgent extends Actor {
   }
 
   def searchKnowledgeAndSendAnswer(usersQueryInstance: UsersQueryInstance, dirname: String): Unit = {
-    findLocationUsingNERTags(usersQueryInstance, dirname)
+
+    if(usersQueryInstance.parsedType.equals(QueryType.Location)) {
+      findLocationUsingNERTags(usersQueryInstance, dirname)
+    } else {
+      println("Sorry, cant answer")
+    }
   }
 
   def findLocationUsingNERTags(usersQueryInstance: UsersQueryInstance, dirname: String): Unit = {
