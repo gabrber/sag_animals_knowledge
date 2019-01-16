@@ -97,12 +97,7 @@ class KnowledgeAgent extends Actor {
   }
 
   def searchKnowledgeAndSendAnswer(usersQueryInstance: UsersQueryInstance, dirname: String): Unit = {
-
-    if(usersQueryInstance.parsedType.equals(QueryType.Location)) {
-      findLocationUsingNERTags(usersQueryInstance, dirname)
-    } else {
-      println("Sorry, cant answer")
-    }
+    findLocationUsingNERTags(usersQueryInstance, dirname)
   }
 
   def findLocationUsingNERTags(usersQueryInstance: UsersQueryInstance, dirname: String): Unit = {
@@ -168,7 +163,6 @@ class KnowledgeAgent extends Actor {
 
   // Receive Message cases
   def receive = {
-    case animal ⇒ log.info("received message: " + animal.toString())
     case _      ⇒ log.info("received unknown message")
   }
 }

@@ -8,7 +8,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   override def receive = {
-    case (animal:String, question:String) =>
+    case (animal:String, question:String, questionType: QueryType.Value) =>
       var animalUrl = ""
       if (animal.toLowerCase == "dog"){animalUrl = baseUrl + "All-About-Dogs.html"}
       else {animalUrl = baseUrl + animal.capitalize + "-facts.html"}
@@ -21,8 +21,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
 
-        // FIXME mocked :(
-        self ! UsersQueryInstance(question, QueryType.Location)
+        self ! UsersQueryInstance(question + " " + animal, questionType)
       } else { log.info("Cannot find info about " + animal)}
 
     case usersQueryInstance: UsersQueryInstance =>

@@ -7,6 +7,8 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.Await
 
+import eiti.sag.query.{QueryMap,QueryType}
+
 class TranslationAgent extends Actor {
   val log = Logging(context.system, this)
 
@@ -18,11 +20,19 @@ class TranslationAgent extends Actor {
     return animal
   }
 
-  def getInfoType(animal:String): String = {
+  def getQuestion(animal:String): String = {
     println("What do you want to know about " + animal + "?")
     var infoType = scala.io.StdIn.readLine()
     println("Okay. Looking for " + infoType)
     return infoType
+  }
+
+  def getQuestionType(question: String): QueryType.Value = {
+
+    for (word <- question.split(" +")){
+      for ((k,v) <- QueryMap.keywordListToQueryTypeMap) if(k.contains(word)) return v
+    }
+    return null
   }
 
   // Choose one Agent with name matching pattern
@@ -42,9 +52,11 @@ class TranslationAgent extends Actor {
   def receive = {
     case "greetings" ⇒
       var animal = greetings().toLowerCase
-      var infoType = getInfoType(animal)
+      var question = getQuestion(animal)
+      var questionType = getQuestionType(question)
       //choseAllAgents("KnowledgeAgent") ! "hi"
-      choseAllAgents("KnowledgeAgent") ! (animal,infoType)
+      if (questionType != null) choseAllAgents("KnowledgeAgent") ! (animal,question,questionType)
+      else {log.info("Cannot resolve question type")}
     case _      ⇒ log.info("received unknown message")
   }
 }

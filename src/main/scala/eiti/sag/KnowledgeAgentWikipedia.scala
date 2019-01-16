@@ -20,7 +20,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
   val baseUrl = "https://en.wikipedia.org/wiki/"
 
   override def receive = {
-    case (animal:String, question:String) =>
+    case (animal:String, question:String, questionType: QueryType.Value) =>
       var animalUrl = baseUrl + URLEncoder.encode(animal.capitalize, "UTF-8")
 
       println(animalUrl)
@@ -32,7 +32,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
         animalsLearnedAbout = animal :: animalsLearnedAbout
 
         // FIXME mocked :(
-        self ! UsersQueryInstance(question, QueryType.Location)
+        self ! UsersQueryInstance(question + " " + animal, questionType)
       } else { log.info("Cannot find info about " + animal)}
 
     case usersQueryInstance: UsersQueryInstance =>

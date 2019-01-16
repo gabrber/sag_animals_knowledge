@@ -9,7 +9,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
   val baseUrl = "https://www.worldwildlife.org/species/"
 
   override def receive = {
-    case (animal:String, question:String) =>
+    case (animal:String, question:String, questionType: QueryType.Value) =>
       var animalUrl = baseUrl + animal
 
       println(animalUrl)
@@ -21,7 +21,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         animalsLearnedAbout = animal :: animalsLearnedAbout
 
         // FIXME mocked :(
-        self ! UsersQueryInstance(question, QueryType.Location)
+        self ! UsersQueryInstance(question + " " + animal, questionType)
       } else { log.info("Cannot find info about " + animal)}
 
     case usersQueryInstance: UsersQueryInstance =>
