@@ -1,17 +1,16 @@
 package eiti.sag
+
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 
-class KnowledgeAgentAFS extends KnowledgeAgent {
+class KnowledgeAgentWWF extends KnowledgeAgent {
 
-  val bag_of_words = "animal_facts_encyclopedia/bag_of_words"
-  val ner = "animal_facts_encyclopedia/ner"
-  val baseUrl = "https://www.animalfactsencyclopedia.com/"
+  val bag_of_words = "wwf/bag_of_words"
+  val ner = "wwf/ner"
+  val baseUrl = "https://www.worldwildlife.org/species/"
 
   override def receive = {
     case (animal:String, question:String) =>
-      var animalUrl = ""
-      if (animal.toLowerCase == "dog"){animalUrl = baseUrl + "All-About-Dogs.html"}
-      else {animalUrl = baseUrl + animal.capitalize + "-facts.html"}
+      var animalUrl = baseUrl + animal
 
       println(animalUrl)
       if (checkUrlExists(animalUrl)) {

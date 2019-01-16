@@ -15,13 +15,13 @@ import scala.io.Source
 
 class KnowledgeAgentWikipedia extends KnowledgeAgent {
 
-  val bag_of_words = "wikipedia_bag_of_words"
-  val ner = "wikipedia_ner"
+  val bag_of_words = "wikipedia/bag_of_words"
+  val ner = "wikipedia/ner"
   val baseUrl = "https://en.wikipedia.org/wiki/"
 
   override def receive = {
     case (animal:String, question:String) =>
-      var animalUrl = baseUrl + URLEncoder.encode(animal, "UTF-8")
+      var animalUrl = baseUrl + URLEncoder.encode(animal.capitalize, "UTF-8")
 
       println(animalUrl)
       if (checkUrlExists(animalUrl)) {
