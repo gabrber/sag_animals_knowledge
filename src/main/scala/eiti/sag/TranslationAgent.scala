@@ -41,10 +41,10 @@ class TranslationAgent extends Actor {
   // Receive Message cases
   def receive = {
     case "greetings" ⇒
-      var animal = greetings()
+      var animal = greetings().toLowerCase
       var infoType = getInfoType(animal)
       //choseAllAgents("KnowledgeAgent") ! "hi"
-      choseAllAgents("KnowledgeAgent") ! animal
+      choseAllAgents("KnowledgeAgent") ! (animal,infoType)
     case _      ⇒ log.info("received unknown message")
   }
 }

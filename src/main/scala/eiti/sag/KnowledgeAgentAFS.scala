@@ -1,32 +1,33 @@
 package eiti.sag
+import eiti.sag.query.{QueryType, UsersQueryInstance}
 
-import org.jsoup.nodes.Document
-
-//https://www.animalfactsencyclopedia.com
 class KnowledgeAgentAFS extends KnowledgeAgent {
 
-  //TODO
-  override def readTable(doc:Document): String = {
-    val table = doc.body.select("table").get(1)
-    val rows = table.select("tr")
-    var array: List[String] = List()
-    var i = 0
-    while (i < rows.size) { //first row is the col names so skip it.
-      val row = rows.get(i)
-      val cols = row.select("td")
-      println(row)
-      //println(cols)
-      i += 1
-    }
-    var tableText = rows.text()
-    return tableText
-  }
+  val bag_of_words = "afs_bag_of_words"
+  val ner = "afs_ner"
+  val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   override def receive = {
-    case "dog" =>
-      var doc = readUrl("https://www.animalfactsencyclopedia.com/All-About-Dogs.html")
-      println(readTable(doc))
-    case animal ⇒ log.info("received message: " + animal.toString())
+    case (animal:String, question:String) =>
+      var animalUrl = ""
+      if (animal.toLowerCase == "dog"){animalUrl = baseUrl + "All-About-Dogs.html"}
+      else {animalUrl = baseUrl + animal.capitalize + "-facts.html"}
+
+      println(animalUrl)
+      if (checkUrlExists(animalUrl)) {
+        val pageContent = fetchContent(animalUrl)
+        persistAsBagOfWords(pageContent, animal, bag_of_words)
+        persistAsNERTokens(pageContent, animal, ner)
+
+        animalsLearnedAbout = animal :: animalsLearnedAbout
+
+        // FIXME mocked :(
+        self ! UsersQueryInstance(question, QueryType.Location)
+      } else { log.info("Cannot find info about " + animal)}
+
+    case usersQueryInstance: UsersQueryInstance =>
+      searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
+
     case _      ⇒ log.info("received unknown message")
   }
 }

@@ -1,18 +1,21 @@
 package eiti.sag
 
+import java.io._
+
 import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, PoisonPill, Props, Terminated}
 import akka.event.Logging
+import eiti.sag.query.{QueryType, UsersQueryInstance}
+import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
+import opennlp.tools.tokenize.{TokenizerME, TokenizerModel}
+import org.jsoup.nodes.{Node, TextNode}
+import org.jsoup.select.NodeVisitor
 
-import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.concurrent.Await
+import scala.io.Source
+import scalaj.http._
 
 //https://github.com/ruippeixotog/scala-scraper
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
-import net.ruippeixotog.scalascraper.dsl.DSL._
-import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
-import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
-import net.ruippeixotog.scalascraper.model._
 
 //JSOUP
 import org.jsoup.Jsoup
@@ -21,44 +24,146 @@ import org.jsoup.nodes.{Document, Element}
 class KnowledgeAgent extends Actor {
   val log = Logging(context.system, this)
 
-  //Receive doc from URL
-  def readUrl(textUrl: String): Document = {
-    val browser = JsoupBrowser()
-    val html = browser.get(textUrl)
-    html >> allText
+  val knowledgeBaseSep = ";"
+
+  val locationModelFile = "database/en-ner-location.bin"
+  val tokenModelFile = "database/en-token.bin"
+  val HEURISTIC_CONTENT_LENGTH_THRESHOLD = 100
+
+  // FIXME - to nie jest fault tolerant
+  var animalsLearnedAbout: List[String] = List()
+
+  def checkUrlExists(checkUrl: String): Boolean = {
+    val response = Http(checkUrl).asString.code
+    var ifExists = false
+    if (response != 404) { ifExists = true}
+    ifExists
+  }
+
+  def fetchContent(pageTitle: String): String = {
+    val url = pageTitle
+    val html = JsoupBrowser().get(url)
     val doc = Jsoup.parse(html.toString)
-
-    return doc
+    val sb = new StringBuilder()
+    doc.traverse(new MyNodeVisitor(sb))
+    sb.toString()
   }
 
-  //read body from html doc
-  def readAllBody(doc:Document): String = {
-    val docBody = doc.body.text
+  def persistAsBagOfWords(pageContent: String, animal: String, dirname: String) = {
+    val wordsCounted = pageContent.split(" ")
+      .map(p => p.trim.toLowerCase)
+      .filter(p => p != "")
+      .groupBy((word: String) => word)
+      .mapValues(_.length)
 
-    return docBody
+    // TODO - encode filename
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+    for (elem <- wordsCounted.keys) {
+      bw.write(elem + knowledgeBaseSep + wordsCounted(elem) + "\n")
+    }
   }
 
-  //read parapgrapgs form html doc
-  def readParagraphs(doc: Document): String = {
-    val paragraphs = doc.body.select("p")
-    val pText = paragraphs.text
-    return pText
+  def persistAsNERTokens(pageContent: String, animal: String, dirname: String): Unit = {
+
+    println("Loading model ...")
+
+    val bis = new BufferedInputStream(new FileInputStream(locationModelFile))
+    val model = new TokenNameFinderModel(bis)
+    val nameFinder = new NameFinderME(model)
+
+    println("Model loaded. Tokenizing ...")
+    val tokens = tokenize(pageContent)
+    val nameSpans = nameFinder.find(tokens)
+
+    val locationToCertaintyMap =
+      for(ns <- nameSpans) yield {
+        val substring: String = tokens.slice(ns.getStart, ns.getEnd).mkString(" ")
+        val prob: Double = ns.getProb
+        val entityType = ns.getType
+        (substring, prob)
+      }
+
+    val locationToWeightedCertaintyMap = locationToCertaintyMap
+      .groupBy(_._1)
+      .mapValues(_.map(_._2).sum)
+
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+    for (elem <- locationToWeightedCertaintyMap.keys) {
+      bw.write(elem + knowledgeBaseSep + locationToWeightedCertaintyMap(elem) + "\n")
+    }
+    bw.close()
   }
 
-  //read table
-  def readTable(doc:Document): String = {
-    val table = doc.body.select("table")
-    val rows = table.select("tr")
+  def searchKnowledgeAndSendAnswer(usersQueryInstance: UsersQueryInstance, dirname: String): Unit = {
 
-//    var i=0
-//    while (i < rows.size) {
-//      val row = rows.get(i)
-//      val cols = row.select("td")
-//      i += 1
-//    }
-//
-    var tableText = rows.text()
-    return tableText
+    if(usersQueryInstance.parsedType.equals(QueryType.Location)) {
+      findLocationUsingNERTags(usersQueryInstance, dirname)
+    } else {
+      println("Sorry, cant answer")
+    }
+  }
+
+  def findLocationUsingNERTags(usersQueryInstance: UsersQueryInstance, dirname: String): Unit = {
+
+    def extractAnimal(query: String): String = {
+      for (elem <- animalsLearnedAbout) {
+        if(query.contains(elem)) {
+          return elem
+        }
+      }
+      null
+    }
+
+    val animal = extractAnimal(usersQueryInstance.originalQuery)
+    if(animal == null) {
+      println("Query: " + usersQueryInstance + ". Didnot find answer :(")
+      return
+    }
+
+    // FIXME mocked :(
+    // możnaby trzymać gdzieś listę zwierząt, o których się nauczyliśmy, i przeszukiwać pytanie pod tym kątem
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val content = Source.fromFile("animal_db/" + dirname + "/" + animal + ".txt").mkString
+    val mostCertainLocation = content.split("\n").filter(line => !line.isEmpty).map(line => {
+      val word = line.split(knowledgeBaseSep)(0)
+      val certainty = line.split(knowledgeBaseSep)(1).toDouble
+      (word, certainty)
+    }).maxBy(_._2)._1
+
+    println("Query: " + usersQueryInstance.originalQuery + ". Found answer: " + mostCertainLocation)
+  }
+
+  @throws[IOException]
+  def tokenize(sentence: String): Array[String] = {
+    val bis = new BufferedInputStream(new FileInputStream(tokenModelFile))
+    val tokenModel = new TokenizerModel(bis)
+    val tokenizer = new TokenizerME(tokenModel)
+    tokenizer.tokenize(sentence)
+  }
+
+  class MyNodeVisitor(stringBuilder: StringBuilder) extends NodeVisitor {
+    override def tail(node: Node, depth: Int): Unit = {}
+
+    override def head(node: Node, depth: Int): Unit = {
+
+      val legalTags = List("p", "a", "b")
+
+      if(node.isInstanceOf[TextNode]) {
+        val p = node.asInstanceOf[TextNode].parent()
+        if(p.isInstanceOf[Element]) {
+          if(legalTags.contains(p.asInstanceOf[Element].tagName())) {
+            val nodeText = node.asInstanceOf[TextNode].getWholeText
+            if(nodeText.length > HEURISTIC_CONTENT_LENGTH_THRESHOLD) {
+              // heurystyka: jeśli rozmiar elementu jest wystarczająco duży
+              // możemy założyć, że jest to treść
+              stringBuilder.append(nodeText)
+            }
+          }
+        }
+      }
+    }
   }
 
   // Receive Message cases
