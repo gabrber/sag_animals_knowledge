@@ -1,32 +1,30 @@
-package eiti.sag
+package eiti.sag.knowledge_agents
 
 import java.io._
 
-import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, PoisonPill, Props, Terminated}
+import akka.actor.Actor
 import akka.event.Logging
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
-import opennlp.tools.tokenize.{TokenizerME, TokenizerModel,WhitespaceTokenizer}
 import opennlp.tools.ngram.NGramModel
+import opennlp.tools.postag.{POSModel, POSSample, POSTaggerME}
+import opennlp.tools.tokenize.{TokenizerME, TokenizerModel, WhitespaceTokenizer}
 import opennlp.tools.util.StringList
-import opennlp.tools.postag.{POSModel,POSTaggerME,POSSample}
-
 import org.jsoup.nodes.{Node, TextNode}
 import org.jsoup.select.NodeVisitor
 
-import scala.language.postfixOps
+import scala.collection.JavaConverters._
 import scala.io.Source
+import scala.language.postfixOps
 import scalaj.http._
-
-import collection.JavaConverters._
 //https://github.com/ruippeixotog/scala-scraper
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 
 //JSOUP
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element}
+import org.jsoup.nodes.Element
 
-class KnowledgeAgent extends Actor {
+abstract class KnowledgeAgent extends Actor {
   val log = Logging(context.system, this)
 
   val knowledgeBaseSep = ";"
@@ -36,7 +34,6 @@ class KnowledgeAgent extends Actor {
   val posModelFile = "database/en-pos-maxent.bin"
   val HEURISTIC_CONTENT_LENGTH_THRESHOLD = 100
 
-  // FIXME - to nie jest fault tolerant
   var animalsLearnedAbout: List[String] = List()
 
   def checkUrlExists(checkUrl: String): Boolean = {
@@ -129,7 +126,6 @@ class KnowledgeAgent extends Actor {
     }
 
     // FIXME mocked :(
-    // możnaby trzymać gdzieś listę zwierząt, o których się nauczyliśmy, i przeszukiwać pytanie pod tym kątem
     val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
     val content = Source.fromFile("animal_db/" + dirname + "/" + animal + ".txt").mkString
     val mostCertainLocation = content.split("\n").filter(line => !line.isEmpty).map(line => {
@@ -193,6 +189,11 @@ class KnowledgeAgent extends Actor {
 //    bw.close()
   }
 
+  def fetchAlreadLearnedAnimals(fileName: String) = {
+    val lines = Source.fromFile("animal_db/" + fileName).mkString.split("\n").filter(p => p.isEmpty == false)
+
+    animalsLearnedAbout = lines.map(line => line.trim).toList
+  }
 
   class MyNodeVisitor(stringBuilder: StringBuilder) extends NodeVisitor {
     override def tail(node: Node, depth: Int): Unit = {}
@@ -217,8 +218,19 @@ class KnowledgeAgent extends Actor {
     }
   }
 
-  // Receive Message cases
-  def receive = {
-    case _      ⇒ log.info("received unknown message")
+  def persistAnimalsLearnedAbout(animalsLearnedAbout: List[String], fileName: String) = {
+    val file = new File("animal_db/" + fileName)
+    val bw = new BufferedWriter(new FileWriter(file))
+
+    for (elem <- animalsLearnedAbout) {
+      bw.write(elem + "\n")
+    }
+    bw.close()
   }
+
+}
+
+object KnowledgeAgent {
+  final case class LearnAbout(animal: String)
+  final case class FetchedAlreadyLearnedAnimals()
 }

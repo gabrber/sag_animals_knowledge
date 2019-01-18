@@ -1,7 +1,7 @@
 package eiti.sag.query
 
 import akka.actor.{Actor, ActorSystem, Props}
-import eiti.sag.KnowledgeAgentWikipedia
+import eiti.sag.knowledge_agents.KnowledgeAgentWikipedia
 
 class QueryTranslator extends Actor {
 

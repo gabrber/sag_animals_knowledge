@@ -1,15 +1,20 @@
-package eiti.sag
+package eiti.sag.knowledge_agents
+
+import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 
 class KnowledgeAgentAFS extends KnowledgeAgent {
 
+  val learned_animals = "animal_facts_encyclopedia/learned_animals"
   val bag_of_words = "animal_facts_encyclopedia/bag_of_words"
   val ner = "animal_facts_encyclopedia/ner"
   val pos_ngrams = "animal_facts_encyclopedia/pos_ngrams"
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   override def receive = {
-    case (animal:String, question:String, questionType: QueryType.Value) =>
+    case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
+    case LearnAbout(animal: String) =>
+      println("AFS learning about " + animal)
       var animalUrl = ""
       if (animal.toLowerCase == "dog"){animalUrl = baseUrl + "All-About-Dogs.html"}
       else {animalUrl = baseUrl + animal.capitalize + "-facts.html"}
@@ -22,8 +27,8 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
         persistAsPosNgrams(pageContent, animal, pos_ngrams)
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
-
-        self ! UsersQueryInstance(question + " " + animal, questionType)
+        persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+        println("AFS has learned about " + animal)
       } else { log.info("Cannot find info about " + animal)}
 
     case usersQueryInstance: UsersQueryInstance =>

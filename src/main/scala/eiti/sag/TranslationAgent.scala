@@ -6,8 +6,7 @@ import akka.event.Logging
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.Await
-
-import eiti.sag.query.{QueryMap,QueryType}
+import eiti.sag.query.{QueryMap, QueryType, UsersQueryInstance}
 
 class TranslationAgent extends Actor {
   val log = Logging(context.system, this)
@@ -51,12 +50,16 @@ class TranslationAgent extends Actor {
   // Receive Message cases
   def receive = {
     case "greetings" ⇒
-      var animal = greetings().toLowerCase
-      var question = getQuestion(animal)
-      var questionType = getQuestionType(question)
-      //choseAllAgents("KnowledgeAgent") ! "hi"
-      if (questionType != null) choseAllAgents("KnowledgeAgent") ! (animal,question,questionType)
-      else {log.info("Cannot resolve question type")}
+      val animal = greetings().toLowerCase
+      val question = getQuestion(animal)
+      val questionType = getQuestionType(question)
+
+      if(questionType == null){
+        log.info("Cannot resolve question type")
+      }
+
+      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType)
+
     case _      ⇒ log.info("received unknown message")
   }
 }

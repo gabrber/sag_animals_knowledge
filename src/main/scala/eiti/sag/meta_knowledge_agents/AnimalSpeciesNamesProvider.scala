@@ -1,4 +1,4 @@
-package eiti.sag
+package eiti.sag.meta_knowledge_agents
 
 import akka.actor.Actor
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser

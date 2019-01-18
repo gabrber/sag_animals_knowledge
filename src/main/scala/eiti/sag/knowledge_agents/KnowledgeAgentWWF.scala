@@ -1,17 +1,21 @@
-package eiti.sag
+package eiti.sag.knowledge_agents
 
+import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 
 class KnowledgeAgentWWF extends KnowledgeAgent {
 
+  val learned_animals = "wwf/learned_animals"
   val bag_of_words = "wwf/bag_of_words"
   val ner = "wwf/ner"
   val pos_ngrams = "wwf/pos_ngrams"
   val baseUrl = "https://www.worldwildlife.org/species/"
 
   override def receive = {
-    case (animal:String, question:String, questionType: QueryType.Value) =>
-      var animalUrl = baseUrl + animal
+    case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
+    case LearnAbout(animal: String) =>
+      println("WWF learning about " + animal)
+      val animalUrl = baseUrl + animal
 
       println(animalUrl)
       if (checkUrlExists(animalUrl)) {
@@ -21,9 +25,8 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         persistAsPosNgrams(pageContent, animal, pos_ngrams)
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
-
-        // FIXME mocked :(
-        self ! UsersQueryInstance(question + " " + animal, questionType)
+        persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+        println("WWF has learned about " + animal)
       } else { log.info("Cannot find info about " + animal)}
 
     case usersQueryInstance: UsersQueryInstance =>
