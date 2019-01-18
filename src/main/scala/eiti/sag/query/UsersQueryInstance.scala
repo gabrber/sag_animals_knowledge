@@ -1,5 +1,7 @@
 package eiti.sag.query
 
-case class UsersQueryInstance(originalQuery: String, parsedType: QueryType.Value) {
+import eiti.sag.TranslationAgent.TaggedQuery
+
+case class UsersQueryInstance(originalQuery: String, parsedType: QueryType.Value, tagged: TaggedQuery) {
 
 }

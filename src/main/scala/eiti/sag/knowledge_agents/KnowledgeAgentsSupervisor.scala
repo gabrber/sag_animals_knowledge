@@ -8,6 +8,7 @@ import eiti.sag.query.UsersQueryInstance
 
 class KnowledgeAgentsSupervisor extends Actor {
 
+
   var knowledgeAgentList: List[ActorRef] = List()
 
   override def receive: Receive = {
@@ -61,6 +62,10 @@ class KnowledgeAgentsSupervisor extends Actor {
 }
 
 object KnowledgeAgentsSupervisor {
+
+  val AgentName: String = "KnowledgeAgentsSupervisor"
+  val FullAgentPath: String = "akka://" + MainApp.AnimalsKnowledgeSystemName +  " /user/" + AgentName
+
   final case class StartLearning()
   final case class InitAgents()
 }

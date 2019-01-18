@@ -1,15 +1,27 @@
 package eiti.sag
 
+import java.io.{BufferedInputStream, FileInputStream}
+
 import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, PoisonPill, Props, Terminated}
 import akka.event.Logging
+import eiti.sag.TranslationAgent.{SingleWordInSentence, TaggedQuery}
+import eiti.sag.query.KnownPosTags.KnownPosTags
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent.Await
-import eiti.sag.query.{QueryMap, QueryType, UsersQueryInstance}
+import eiti.sag.query._
+import opennlp.tools.postag.{POSModel, POSTaggerME}
+import opennlp.tools.tokenize.WhitespaceTokenizer
 
 class TranslationAgent extends Actor {
   val log = Logging(context.system, this)
+
+  val lexiconFileName = "database/en-pos-maxent.bin"
+
+  val model = new POSModel(new BufferedInputStream(new FileInputStream(lexiconFileName)))
+  val tagger = new POSTaggerME(model)
+
 
   // Get animal name from user
   def greetings(): String = {
@@ -34,6 +46,18 @@ class TranslationAgent extends Actor {
     return null
   }
 
+  def tag(text: String) = {
+    // znaczenie tag'ów: http://paula.petcu.tm.ro/init/default/post/opennlp-part-of-speech-tags
+    // nie dzielimy na zdania, bo zakładamy, że zapytanie użytkownika jest już pojedynczynym zdaniem
+    val whitespaceTokenizerLine: Array[String] = WhitespaceTokenizer.INSTANCE.tokenize(text)
+    val tags: Array[String] = tagger.tag(whitespaceTokenizerLine)
+    val tokenizedSentence = (tags zip whitespaceTokenizerLine).zipWithIndex map {
+      case ((tag: String, word: String), index: Int) => SingleWordInSentence(word, tag, KnownPosTags.fromString(tag), index)
+    }
+
+    TaggedQuery(tokenizedSentence)
+  }
+
   // Choose one Agent with name matching pattern
   def choseOneAgent(patternName:String): ActorRef = {
     var test = context.actorSelection("akka://AnimalsKnowledgeBase/user/" + patternName + "*").resolveOne(5 second)
@@ -47,19 +71,31 @@ class TranslationAgent extends Actor {
     return agent
   }
 
+
+
   // Receive Message cases
   def receive = {
     case "greetings" ⇒
       val animal = greetings().toLowerCase
       val question = getQuestion(animal)
       val questionType = getQuestionType(question)
+      val tagged = tag(question)
 
       if(questionType == null){
         log.info("Cannot resolve question type")
       }
 
-      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType)
+      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged)
 
     case _      ⇒ log.info("received unknown message")
+  }
+}
+
+object TranslationAgent {
+  case class SingleWordInSentence(word: String, posRaw: String, pos: KnownPosTags, index: Int)
+
+  case class TaggedQuery(sentence: Array[SingleWordInSentence]) {
+    assert(sentence.map(word => word.index).sorted sameElements  sentence.map(w => w.index))
+
   }
 }
