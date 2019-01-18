@@ -17,6 +17,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
 
   val bag_of_words = "wikipedia/bag_of_words"
   val ner = "wikipedia/ner"
+  val pos_ngrams = "wikipedia/pos_ngrams"
   val baseUrl = "https://en.wikipedia.org/wiki/"
 
   override def receive = {
@@ -28,6 +29,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
         val pageContent = fetchContent(animalUrl)
         persistAsBagOfWords(pageContent, animal, bag_of_words)
         persistAsNERTokens(pageContent, animal, ner)
+        persistAsPosNgrams(pageContent, animal, pos_ngrams)
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
 

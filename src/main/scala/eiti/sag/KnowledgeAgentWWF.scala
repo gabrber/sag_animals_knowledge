@@ -6,6 +6,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
 
   val bag_of_words = "wwf/bag_of_words"
   val ner = "wwf/ner"
+  val pos_ngrams = "wwf/pos_ngrams"
   val baseUrl = "https://www.worldwildlife.org/species/"
 
   override def receive = {
@@ -17,6 +18,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         val pageContent = fetchContent(animalUrl)
         persistAsBagOfWords(pageContent, animal, bag_of_words)
         persistAsNERTokens(pageContent, animal, ner)
+        persistAsPosNgrams(pageContent, animal, pos_ngrams)
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
 

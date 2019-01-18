@@ -6,7 +6,11 @@ import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, PoisonPill, Pro
 import akka.event.Logging
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
-import opennlp.tools.tokenize.{TokenizerME, TokenizerModel}
+import opennlp.tools.tokenize.{TokenizerME, TokenizerModel,WhitespaceTokenizer}
+import opennlp.tools.ngram.NGramModel
+import opennlp.tools.util.StringList
+import opennlp.tools.postag.{POSModel,POSTaggerME,POSSample}
+
 import org.jsoup.nodes.{Node, TextNode}
 import org.jsoup.select.NodeVisitor
 
@@ -14,6 +18,7 @@ import scala.language.postfixOps
 import scala.io.Source
 import scalaj.http._
 
+import collection.JavaConverters._
 //https://github.com/ruippeixotog/scala-scraper
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 
@@ -28,6 +33,7 @@ class KnowledgeAgent extends Actor {
 
   val locationModelFile = "database/en-ner-location.bin"
   val tokenModelFile = "database/en-token.bin"
+  val posModelFile = "database/en-pos-maxent.bin"
   val HEURISTIC_CONTENT_LENGTH_THRESHOLD = 100
 
   // FIXME - to nie jest fault tolerant
@@ -142,6 +148,51 @@ class KnowledgeAgent extends Actor {
     val tokenizer = new TokenizerME(tokenModel)
     tokenizer.tokenize(sentence)
   }
+
+  def createNgram(pageContent: String) = {
+    val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
+    //val tokens = tokenize(pageContent)
+    val nGramModel = new NGramModel
+    nGramModel.add(new StringList(tokens: _*),2,3)
+    //println("Total ngrams: " + nGramModel.numberOfGrams)
+    nGramModel.toDictionary()
+  }
+
+  def persistAsPOS(pageContent: String) = {
+    val pos = new BufferedInputStream(new FileInputStream(posModelFile))
+    val posModel = new POSModel(pos)
+    val posTagger = new POSTaggerME(posModel)
+    val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
+    val tags = posTagger.tag(tokens)
+    val posSentence = new POSSample(tokens, tags)
+    posSentence.toString()
+  }
+
+  def persistAsPosNgrams(pageContent :String,animal :String,dirname :String) = {
+
+    val posSentenceString = persistAsPOS(pageContent)
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+
+    val ngramPos = createNgram(posSentenceString).asScala.toArray
+    for(ngramList <- ngramPos) {
+      for (i <- ngramList.asScala.toArray)
+        for (elem <- i.split(","))
+          //for (i <- elem.split("_")) bw.write(i + knowledgeBaseSep)
+          bw.write(elem + knowledgeBaseSep)
+      bw.write("\n")
+    }
+    bw.close()
+
+
+//    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+//    val bw = new BufferedWriter(new FileWriter(file))
+//    for (elem <- locationToWeightedCertaintyMap.keys) {
+//      bw.write(elem + knowledgeBaseSep + locationToWeightedCertaintyMap(elem) + "\n")
+//    }
+//    bw.close()
+  }
+
 
   class MyNodeVisitor(stringBuilder: StringBuilder) extends NodeVisitor {
     override def tail(node: Node, depth: Int): Unit = {}

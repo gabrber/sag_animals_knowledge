@@ -5,6 +5,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
 
   val bag_of_words = "animal_facts_encyclopedia/bag_of_words"
   val ner = "animal_facts_encyclopedia/ner"
+  val pos_ngrams = "animal_facts_encyclopedia/pos_ngrams"
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   override def receive = {
@@ -18,6 +19,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
         val pageContent = fetchContent(animalUrl)
         persistAsBagOfWords(pageContent, animal, bag_of_words)
         persistAsNERTokens(pageContent, animal, ner)
+        persistAsPosNgrams(pageContent, animal, pos_ngrams)
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
 
