@@ -1,5 +1,8 @@
 package eiti.sag.knowledge_agents
 
+import java.io.FileNotFoundException
+import java.lang.Exception
+
 import eiti.sag.HttpServer.Kaboom
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
@@ -39,7 +42,9 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
 
     case usersQueryInstance: UsersQueryInstance =>
       searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
-
+      try { val full_sent = findSentence(usersQueryInstance.mainWords, usersQueryInstance.animal, lemmaSentences, sentences)
+      } catch { case _ => println("Cannot find sentence")}
+      println("WWF is done")
     case _      ⇒ log.info("received unknown message")
   }
 }

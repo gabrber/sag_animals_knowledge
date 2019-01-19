@@ -71,7 +71,7 @@ class TranslationAgent extends Actor {
         println("looking for noun")
         for (word <- tag.sentence){
           word.posRaw match {
-            case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word,word.posRaw))
+            case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""),word.posRaw))
             case _ =>
           }
         }
@@ -80,7 +80,7 @@ class TranslationAgent extends Actor {
         println("looking for werb")
         for (word <- tag.sentence){
           word.posRaw match {
-            case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word, word.posRaw))
+            case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""), word.posRaw))
             case _ =>
           }
         }
@@ -131,7 +131,7 @@ class TranslationAgent extends Actor {
         log.info("Cannot resolve question type")
       }
 
-      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged, mainWords)
+      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged, mainWords, animal)
     case _      ⇒ log.info("received unknown message")
   }
 }

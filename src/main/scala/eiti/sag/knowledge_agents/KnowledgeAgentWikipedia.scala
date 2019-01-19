@@ -30,6 +30,9 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
         persistAsBagOfWords(pageContent, animal, bag_of_words)
         persistAsNERTokens(pageContent, animal, ner)
         persistAsPosNgrams(pageContent, animal, pos_ngrams)
+        persistAsSentences(pageContent, animal, sentences)
+        persistAsLemmaSentences(sentences, animal, lemmaSentences)
+        persistAsChunker(pageContent, animal, chunker)
 
         animalsLearnedAbout = animal :: animalsLearnedAbout
         persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
@@ -38,7 +41,9 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
 
     case usersQueryInstance: UsersQueryInstance =>
       searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
-
+      try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentences,sentences)
+      } catch { case _ => println("Cannot find sentence")}
+      println("Wikipedia is done")
     case _      ⇒ log.info("received unknown message")
   }
 }

@@ -1,6 +1,8 @@
 package eiti.sag.knowledge_agents
 
 import java.io._
+import java.nio.file.{Files, Paths}
+import java.util
 
 import akka.actor.Actor
 import akka.event.Logging
@@ -12,8 +14,8 @@ import opennlp.tools.postag.{POSModel, POSSample, POSTaggerME}
 import opennlp.tools.tokenize.{TokenizerME, TokenizerModel, WhitespaceTokenizer}
 import opennlp.tools.util.StringList
 import opennlp.tools.lemmatizer.DictionaryLemmatizer
-import opennlp.tools.sentdetect.{SentenceModel, SentenceDetectorME}
-import opennlp.tools.chunker.{ChunkerModel,ChunkerME}
+import opennlp.tools.sentdetect.{SentenceDetectorME, SentenceModel}
+import opennlp.tools.chunker.{ChunkerME, ChunkerModel}
 import org.jsoup.nodes.{Node, TextNode}
 import org.jsoup.select.NodeVisitor
 
@@ -244,6 +246,9 @@ abstract class KnowledgeAgent extends Actor {
     val tokens = readPOS._1
     val postags = readPOS._2
     val lemma = lemmaModel.lemmatize(tokens, postags)
+    for ((lemmaWord,i) <- lemma.zipWithIndex){
+      if (lemmaWord == "O") lemma(i) = tokens.toList(i)
+    }
     lemma
   }
 
@@ -264,6 +269,22 @@ abstract class KnowledgeAgent extends Actor {
     }
     bw.close()
 
+  }
+
+  def findSentence(mainLemma :Array[String], animal : String, lemma_dir :String, sent_dir :String) :Array[String] = {
+    var sentences = new util.ArrayList[String]
+
+    val readLemma = Source.fromFile("animal_db/" + lemma_dir + "/" + animal + ".txt")
+    //val readSent = Source.fromFile("animal_db/" + lemma_dir + "/" + sent_dir + ".txt")
+    val readSent = Files.readAllLines(Paths.get("animal_db/" + sent_dir + "/" + animal + ".txt"))
+
+    for ((line,i) <- readLemma.getLines.zipWithIndex) {
+      var checkLine = line.split(knowledgeBaseSep)
+      for (lemma <- mainLemma) if (checkLine.contains(lemma)) sentences.add(readSent.get(i))
+    }
+    readLemma.close
+    for(i <- sentences.asScala.toArray) println(i)
+    return sentences.asScala.toArray
   }
 
   def fetchAlreadLearnedAnimals(fileName: String) = {
