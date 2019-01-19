@@ -15,3 +15,6 @@ libraryDependencies += "org.jsoup" % "jsoup" % "1.9.1"
 libraryDependencies += "com.google.code.gson" % "gson" % "2.8.5"
 libraryDependencies += "org.apache.opennlp" % "opennlp-tools" % "1.9.0"
 libraryDependencies +=  "org.scalaj" %% "scalaj-http" % "2.4.1"
+
+libraryDependencies += "edu.stanford.nlp" % "stanford-parser" % "3.5.2"
+

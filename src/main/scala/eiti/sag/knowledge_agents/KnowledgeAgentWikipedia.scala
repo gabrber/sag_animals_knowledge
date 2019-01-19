@@ -11,6 +11,9 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
   val bag_of_words = "wikipedia/bag_of_words"
   val ner = "wikipedia/ner"
   val pos_ngrams = "wikipedia/pos_ngrams"
+  val sentences = "wikipedia/sentences"
+  val lemmaSentences = "wikipedia/lemma_sentences"
+  val chunker = "wikipedia/chunker"
   val baseUrl = "https://en.wikipedia.org/wiki/"
 
   override def receive = {

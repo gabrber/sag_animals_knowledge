@@ -33,7 +33,6 @@ object MainApp extends App {
     println("exploring")
     knowledgeAgentsSupervisor ! InitAgents()
     val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
-
     TranslationAgent1 ! "greetings"
   }
 

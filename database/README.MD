@@ -4,3 +4,8 @@ Currently downloaded(and necessary to run application):
 - en-ner-location.bin
 - en-token.bin
 - en-pos-maxent.bin
+- en-chunker.bin
+- en-sent.bin
+
+Download en-lemmatizer.dict
+https://raw.githubusercontent.com/richardwilly98/elasticsearch-opennlp-auto-tagging/master/src/main/resources/models/en-lemmatizer.dict

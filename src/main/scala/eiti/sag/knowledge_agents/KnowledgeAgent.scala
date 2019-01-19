@@ -5,11 +5,15 @@ import java.io._
 import akka.actor.Actor
 import akka.event.Logging
 import eiti.sag.query.{QueryType, UsersQueryInstance}
+import opennlp.tools.lemmatizer.LemmatizerME
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
 import opennlp.tools.ngram.NGramModel
 import opennlp.tools.postag.{POSModel, POSSample, POSTaggerME}
 import opennlp.tools.tokenize.{TokenizerME, TokenizerModel, WhitespaceTokenizer}
 import opennlp.tools.util.StringList
+import opennlp.tools.lemmatizer.DictionaryLemmatizer
+import opennlp.tools.sentdetect.{SentenceModel, SentenceDetectorME}
+import opennlp.tools.chunker.{ChunkerModel,ChunkerME}
 import org.jsoup.nodes.{Node, TextNode}
 import org.jsoup.select.NodeVisitor
 
@@ -32,6 +36,9 @@ abstract class KnowledgeAgent extends Actor {
   val locationModelFile = "database/en-ner-location.bin"
   val tokenModelFile = "database/en-token.bin"
   val posModelFile = "database/en-pos-maxent.bin"
+  val lemmaModelFile = "database/en-lemmatizer.dict"
+  val sentModelFile = "database/en-sent.bin"
+  val chunkerModelFile = "database/en-chunker.bin"
   val HEURISTIC_CONTENT_LENGTH_THRESHOLD = 100
 
   var animalsLearnedAbout: List[String] = List()
@@ -161,12 +168,12 @@ abstract class KnowledgeAgent extends Actor {
     val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
     val tags = posTagger.tag(tokens)
     val posSentence = new POSSample(tokens, tags)
-    posSentence.toString()
+    posSentence
   }
 
   def persistAsPosNgrams(pageContent :String,animal :String,dirname :String) = {
 
-    val posSentenceString = persistAsPOS(pageContent)
+    val posSentenceString = persistAsPOS(pageContent).toString()
     val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
     val bw = new BufferedWriter(new FileWriter(file))
 
@@ -187,6 +194,76 @@ abstract class KnowledgeAgent extends Actor {
 //      bw.write(elem + knowledgeBaseSep + locationToWeightedCertaintyMap(elem) + "\n")
 //    }
 //    bw.close()
+  }
+
+  def persistAsSentences(pageContent :String,animal :String,dirname :String) = {
+
+    val sent = new BufferedInputStream(new FileInputStream(sentModelFile))
+    val sentModel = new SentenceModel(sent)
+    val sentences = new SentenceDetectorME(sentModel)
+    val readSentece = sentences.sentDetect(pageContent)
+
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+
+    for(sentence <- readSentece) {
+          bw.write(sentence + "\n")
+    }
+    bw.close()
+  }
+
+  def persistAsLemmaSentences(filename:String,animal :String,dirname :String) = {
+
+    val readFile = Source.fromFile("animal_db/" + filename + "/" + animal + ".txt")
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+
+    //fixme - nowy POS i Lemmatizer inicjalizują się dla każdej linijki - czasochłonne
+    for (line <- readFile.getLines) {
+      for (lemma <- getLemma(line) :Array[String]) bw.write(lemma + knowledgeBaseSep)
+      bw.write("\n")
+    }
+    readFile.close
+    bw.close()
+  }
+
+  def getPos(pageContent: String) = {
+    val pos = new BufferedInputStream(new FileInputStream(posModelFile))
+    val posModel = new POSModel(pos)
+    val posTagger = new POSTaggerME(posModel)
+    //val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
+    val tokens = tokenize(pageContent)
+    val tags = posTagger.tag(tokens)
+    (tokens,tags)
+  }
+
+  def getLemma(pageContent:String):Array[String] = {
+    val bis = new BufferedInputStream(new FileInputStream(lemmaModelFile))
+    val lemmaModel = new DictionaryLemmatizer(bis)
+    val readPOS = getPos(pageContent)
+    val tokens = readPOS._1
+    val postags = readPOS._2
+    val lemma = lemmaModel.lemmatize(tokens, postags)
+    lemma
+  }
+
+  def persistAsChunker(pageContent:String,animal :String,dirname :String) = {
+    val bis  = new BufferedInputStream(new FileInputStream(chunkerModelFile))
+    val chunkerModel = new ChunkerModel(bis)
+    val chunker = new ChunkerME(chunkerModel)
+    val readPOS = getPos(pageContent)
+    val posSentence = readPOS._1
+    val posTags = readPOS._2
+    val chunkerText = chunker.chunk(posSentence,posTags)
+
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val bw = new BufferedWriter(new FileWriter(file))
+    
+    for((chunk,i) <- chunkerText.zipWithIndex) {
+      bw.write(posSentence(i)+ knowledgeBaseSep + chunk + "\n")
+    }
+    bw.close()
+
   }
 
   def fetchAlreadLearnedAnimals(fileName: String) = {

@@ -71,8 +71,6 @@ class TranslationAgent extends Actor {
     return agent
   }
 
-
-
   // Receive Message cases
   def receive = {
     case "greetings" ⇒
@@ -86,7 +84,6 @@ class TranslationAgent extends Actor {
       }
 
       context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged)
-
     case _      ⇒ log.info("received unknown message")
   }
 }

@@ -9,6 +9,9 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
   val bag_of_words = "animal_facts_encyclopedia/bag_of_words"
   val ner = "animal_facts_encyclopedia/ner"
   val pos_ngrams = "animal_facts_encyclopedia/pos_ngrams"
+  val sentences = "animal_facts_encyclopedia/sentences"
+  val lemmaSentences = "animal_facts_encyclopedia/lemma_sentences"
+  val chunker = "animal_facts_encyclopedia/chunker"
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   override def receive = {
