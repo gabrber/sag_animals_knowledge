@@ -6,5 +6,6 @@ object QueryType extends Enumeration {
   Size,
   Weight,
   Classification, //mammal, reptile, etc.
-  Location = Value
+  Location,
+  None = Value
 }

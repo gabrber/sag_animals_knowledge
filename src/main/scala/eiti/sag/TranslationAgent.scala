@@ -14,6 +14,9 @@ import eiti.sag.query._
 import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.tokenize.WhitespaceTokenizer
 
+import java.util.ArrayList
+import scala.collection.JavaConverters._
+
 class TranslationAgent extends Actor {
   val log = Logging(context.system, this)
 
@@ -43,7 +46,7 @@ class TranslationAgent extends Actor {
     for (word <- question.split(" +")){
       for ((k,v) <- QueryMap.keywordListToQueryTypeMap) if(k.contains(word)) return v
     }
-    return null
+    return QueryType.None
   }
 
   def tag(text: String) = {
@@ -56,6 +59,33 @@ class TranslationAgent extends Actor {
     }
 
     TaggedQuery(tokenizedSentence)
+  }
+
+  def getMainWord(tag:TaggedQuery,question:String):List[String] = {
+    val whitespaceTokenizerLine: Array[String] = WhitespaceTokenizer.INSTANCE.tokenize(question)
+    var foundWord = new ArrayList[String]
+    whitespaceTokenizerLine(0) match {
+      case "what" => {
+        println("looking for noun")
+        for (word <- tag.sentence){
+          word.posRaw match {
+            case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add(word.word)
+            case _ =>
+          }
+        }
+      }
+      case "where" => {
+        println("looking for werb")
+        for (word <- tag.sentence){
+          word.posRaw match {
+            case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add(word.word)
+            case _ =>
+          }
+        }
+      }
+      case _ => println("I don't know what to do :(")
+    }
+    return foundWord.asScala.toList
   }
 
   // Choose one Agent with name matching pattern
@@ -78,12 +108,13 @@ class TranslationAgent extends Actor {
       val question = getQuestion(animal)
       val questionType = getQuestionType(question)
       val tagged = tag(question)
+      val mainWords = getMainWord(tagged,question)
 
       if(questionType == null){
         log.info("Cannot resolve question type")
       }
 
-      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged)
+      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged, mainWords)
     case _      ⇒ log.info("received unknown message")
   }
 }
