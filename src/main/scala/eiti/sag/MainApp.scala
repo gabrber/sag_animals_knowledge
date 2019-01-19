@@ -23,7 +23,7 @@ object MainApp extends App {
   val system = ActorSystem(AnimalsKnowledgeSystemName)
 
   val knowledgeAgentsSupervisor = system.actorOf(Props[KnowledgeAgentsSupervisor], name="KnowledgeAgentsSupervisor")
-  //val webServerAgent = system.actorOf(Props[HttpServer], name="HttpServer")
+  val webServerAgent = system.actorOf(Props[HttpServer], name="HttpServer")
 
   if(mode == Mode.Learn) {
     println("learning")
