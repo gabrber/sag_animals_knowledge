@@ -68,16 +68,31 @@ class TranslationAgent extends Actor {
     var foundWord = new ArrayList[(String,String)]
     whitespaceTokenizerLine(0) match {
       case "what" => {
-        println("looking for noun")
-        for (word <- tag.sentence){
-          word.posRaw match {
-            case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""),word.posRaw))
-            case _ =>
+        if (whitespaceTokenizerLine.length > 1) {
+          whitespaceTokenizerLine(1) match {
+            case "is" | "are" => {
+              println("looking for noun")
+              for (word <- tag.sentence){
+                word.posRaw match {
+                  case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""),word.posRaw))
+                  case _ =>
+                }
+              }}
+            case "do" | "does" | "did" => {
+              println("looking for verb")
+              for (word <- tag.sentence){
+                word.posRaw match {
+                  case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""), word.posRaw))
+                  case _ =>
+                }
+              }
+            }
           }
         }
+        else {println("I cannot understand question")}
       }
       case "where" => {
-        println("looking for werb")
+        println("looking for verb")
         for (word <- tag.sentence){
           word.posRaw match {
             case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""), word.posRaw))
