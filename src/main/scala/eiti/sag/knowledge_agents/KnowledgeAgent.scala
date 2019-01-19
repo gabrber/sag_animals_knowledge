@@ -305,6 +305,20 @@ abstract class KnowledgeAgent extends Actor {
     bw.close()
   }
 
+  override def postStop(): Unit = {
+    println("Agent postStop method")
+    super.postStop()
+  }
+
+  override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
+    println("Agent preRestart method")
+    super.preRestart(reason, message)
+  }
+
+
+  def kaboom() = {
+    1 / 0
+  }
 }
 
 object KnowledgeAgent {

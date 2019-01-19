@@ -1,6 +1,8 @@
 package eiti.sag
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.SupervisorStrategy.Restart
+import akka.actor.{ActorSystem, OneForOneStrategy, Props}
+
 import scala.language.postfixOps
 import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, StartLearning}
 import eiti.sag.knowledge_agents.{KnowledgeAgentAFS, KnowledgeAgentWWF, KnowledgeAgentWikipedia, KnowledgeAgentsSupervisor}
@@ -21,6 +23,7 @@ object MainApp extends App {
   val system = ActorSystem(AnimalsKnowledgeSystemName)
 
   val knowledgeAgentsSupervisor = system.actorOf(Props[KnowledgeAgentsSupervisor], name="KnowledgeAgentsSupervisor")
+  val webServerAgent = system.actorOf(Props[HttpServer], name="HttpServer")
 
   if(mode == Mode.Learn) {
     println("learning")

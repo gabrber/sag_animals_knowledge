@@ -1,5 +1,6 @@
 package eiti.sag.knowledge_agents
 
+import eiti.sag.HttpServer.Kaboom
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 
@@ -15,6 +16,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   override def receive = {
+    case Kaboom => kaboom()
     case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
     case LearnAbout(animal: String) =>
       println("AFS learning about " + animal)
