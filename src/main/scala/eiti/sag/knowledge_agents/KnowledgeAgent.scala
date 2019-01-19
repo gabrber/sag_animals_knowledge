@@ -305,6 +305,11 @@ abstract class KnowledgeAgent extends Actor {
     bw.close()
   }
 
+  override def postStop(): Unit = {
+    println("Agent postStop method")
+    super.postStop()
+  }
+
 }
 
 object KnowledgeAgent {

@@ -2,6 +2,7 @@ package eiti.sag.knowledge_agents
 
 import java.net.URLEncoder
 
+import akka.actor.PoisonPill
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 

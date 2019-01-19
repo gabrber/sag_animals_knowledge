@@ -1,20 +1,25 @@
 package eiti.sag.knowledge_agents
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import eiti.sag.MainApp
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
-import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, StartLearning}
+import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, KillAgent, StartLearning}
 import eiti.sag.query.UsersQueryInstance
 
 class KnowledgeAgentsSupervisor extends Actor {
 
 
-  var knowledgeAgentList: List[ActorRef] = List()
+  var knowledgeAgentMap: scala.collection.mutable.Map[String, ActorRef] = scala.collection.mutable.Map()
+
+  def killSomeAgentAtRandom(agentName: String): Unit = {
+    knowledgeAgentMap(agentName) ! PoisonPill
+  }
 
   override def receive: Receive = {
     case StartLearning() => startLearning()
     case q: UsersQueryInstance => askAQuestion(q)
     case InitAgents() => initAgents()
+    case KillAgent(agentName: String) => killSomeAgentAtRandom(agentName)
     case _ => println("Supervisor - dont know how to handle it")
   }
 
@@ -25,11 +30,11 @@ class KnowledgeAgentsSupervisor extends Actor {
     val KnowledgeAgentWikipedia = system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
     val KnowledgeAgentWWF = system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
 
-    knowledgeAgentList = KnowledgeAgentAFS :: knowledgeAgentList
-    knowledgeAgentList = KnowledgeAgentWikipedia :: knowledgeAgentList
-    knowledgeAgentList = KnowledgeAgentWWF :: knowledgeAgentList
+    knowledgeAgentMap.put("KnowledgeAgentAFS", KnowledgeAgentAFS)
+    knowledgeAgentMap.put("KnowledgeAgentWikipedia", KnowledgeAgentWikipedia)
+    knowledgeAgentMap.put("KnowledgeAgentWWF", KnowledgeAgentWWF)
 
-    for (elem <- knowledgeAgentList) {
+    for (elem <- knowledgeAgentMap.values) {
       elem ! FetchedAlreadyLearnedAnimals()
     }
   }
@@ -41,9 +46,9 @@ class KnowledgeAgentsSupervisor extends Actor {
     val KnowledgeAgentWikipedia = system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
     val KnowledgeAgentWWF = system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
 
-    knowledgeAgentList = KnowledgeAgentAFS :: knowledgeAgentList
-    knowledgeAgentList = KnowledgeAgentWikipedia :: knowledgeAgentList
-    knowledgeAgentList = KnowledgeAgentWWF :: knowledgeAgentList
+    knowledgeAgentMap.put("KnowledgeAgentAFS", KnowledgeAgentAFS)
+    knowledgeAgentMap.put("KnowledgeAgentWikipedia", KnowledgeAgentWikipedia)
+    knowledgeAgentMap.put("KnowledgeAgentWWF", KnowledgeAgentWWF)
 
     // TODO - mocked
     val animals = List("tiger", "koala", "spider", "parrot")
@@ -55,7 +60,7 @@ class KnowledgeAgentsSupervisor extends Actor {
   }
 
   def askAQuestion(userQuery: UsersQueryInstance): Unit = {
-    for (elem <- knowledgeAgentList) {
+    for (elem <- knowledgeAgentMap.values) {
       elem ! userQuery
     }
   }
@@ -64,8 +69,9 @@ class KnowledgeAgentsSupervisor extends Actor {
 object KnowledgeAgentsSupervisor {
 
   val AgentName: String = "KnowledgeAgentsSupervisor"
-  val FullAgentPath: String = "akka://" + MainApp.AnimalsKnowledgeSystemName +  " /user/" + AgentName
+  val FullAgentPath: String = "akka://" + MainApp.AnimalsKnowledgeSystemName +  "/user/" + AgentName
 
   final case class StartLearning()
   final case class InitAgents()
+  final case class KillAgent(name: String)
 }
