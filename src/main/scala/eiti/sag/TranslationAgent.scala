@@ -13,8 +13,10 @@ import scala.concurrent.Await
 import eiti.sag.query._
 import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.tokenize.WhitespaceTokenizer
-
 import java.util.ArrayList
+
+import opennlp.tools.lemmatizer.DictionaryLemmatizer
+
 import scala.collection.JavaConverters._
 
 class TranslationAgent extends Actor {
@@ -61,15 +63,15 @@ class TranslationAgent extends Actor {
     TaggedQuery(tokenizedSentence)
   }
 
-  def getMainWord(tag:TaggedQuery,question:String):List[String] = {
+  def getMainWord(tag:TaggedQuery,question:String):List[(String,String)] = {
     val whitespaceTokenizerLine: Array[String] = WhitespaceTokenizer.INSTANCE.tokenize(question)
-    var foundWord = new ArrayList[String]
+    var foundWord = new ArrayList[(String,String)]
     whitespaceTokenizerLine(0) match {
       case "what" => {
         println("looking for noun")
         for (word <- tag.sentence){
           word.posRaw match {
-            case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add(word.word)
+            case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word,word.posRaw))
             case _ =>
           }
         }
@@ -78,7 +80,7 @@ class TranslationAgent extends Actor {
         println("looking for werb")
         for (word <- tag.sentence){
           word.posRaw match {
-            case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add(word.word)
+            case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word, word.posRaw))
             case _ =>
           }
         }
@@ -86,6 +88,20 @@ class TranslationAgent extends Actor {
       case _ => println("I don't know what to do :(")
     }
     return foundWord.asScala.toList
+  }
+
+  def getMainLemmas(tag:TaggedQuery,question:String):Array[String] = {
+    val mainWords = getMainWord(tag,question)
+    val bis = new BufferedInputStream(new FileInputStream("database/en-lemmatizer.dict"))
+    val lemmaModel = new DictionaryLemmatizer(bis)
+    var tokens = new ArrayList[String]
+    var postags = new ArrayList[String]
+    for (word <- mainWords) {tokens.add(word._1); postags.add(word._2)}
+    val lemma = lemmaModel.lemmatize(tokens.asScala.toArray, postags.asScala.toArray)
+    for ((lemmaWord,i) <- lemma.zipWithIndex){
+      if (lemmaWord == "O") lemma(i) = tokens.asScala.toList(i)
+    }
+    return lemma
   }
 
   // Choose one Agent with name matching pattern
@@ -108,7 +124,8 @@ class TranslationAgent extends Actor {
       val question = getQuestion(animal)
       val questionType = getQuestionType(question)
       val tagged = tag(question)
-      val mainWords = getMainWord(tagged,question)
+      val mainWords = getMainLemmas(tagged,question)
+      for ( i<-mainWords) println(i)
 
       if(questionType == null){
         log.info("Cannot resolve question type")
