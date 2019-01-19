@@ -1,6 +1,8 @@
 package eiti.sag
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.SupervisorStrategy.Restart
+import akka.actor.{ActorSystem, OneForOneStrategy, Props}
+
 import scala.language.postfixOps
 import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, StartLearning}
 import eiti.sag.knowledge_agents.{KnowledgeAgentAFS, KnowledgeAgentWWF, KnowledgeAgentWikipedia, KnowledgeAgentsSupervisor}
@@ -36,8 +38,6 @@ object MainApp extends App {
     val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
     TranslationAgent1 ! "greetings"
   }
-
-
 
 }
 
