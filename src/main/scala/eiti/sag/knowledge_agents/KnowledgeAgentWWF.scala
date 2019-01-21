@@ -3,6 +3,8 @@ package eiti.sag.knowledge_agents
 import java.io.FileNotFoundException
 import java.lang.Exception
 
+import akka.actor.ReceiveTimeout
+import scala.concurrent.duration._
 import eiti.sag.HttpServer.Kaboom
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
@@ -21,6 +23,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
   override def receive = {
     case Kaboom => kaboom()
     case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
+
     case LearnAbout(animal: String) =>
       println("WWF learning about " + animal)
       val animalUrl = baseUrl + animal
@@ -39,12 +42,18 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
         println("WWF has learned about " + animal)
       } else { log.info("Cannot find info about " + animal)}
+      context.setReceiveTimeout(1 minute)
 
     case usersQueryInstance: UsersQueryInstance =>
       searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
       try { val full_sent = findSentence(usersQueryInstance.mainWords, usersQueryInstance.animal, lemmaSentences, sentences)
       } catch { case _ => println("Cannot find sentence")}
       println("WWF is done")
+      context.setReceiveTimeout(1 minute)
+
+    case ReceiveTimeout ⇒
+      println("Received timeout")
+
     case _      ⇒ log.info("received unknown message")
   }
 }

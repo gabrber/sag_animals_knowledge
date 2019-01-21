@@ -3,6 +3,8 @@ package eiti.sag.knowledge_agents
 import eiti.sag.HttpServer.Kaboom
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.query.{QueryType, UsersQueryInstance}
+import akka.actor.ReceiveTimeout
+import scala.concurrent.duration._
 
 class KnowledgeAgentAFS extends KnowledgeAgent {
 
@@ -38,12 +40,18 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
         persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
         println("AFS has learned about " + animal)
       } else { log.info("Cannot find info about " + animal)}
+      context.setReceiveTimeout(1 minute)
 
     case usersQueryInstance: UsersQueryInstance =>
       searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
       try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentences,sentences)
       } catch { case _ => println("Cannot find sentence")}
       println("AFS is done")
+      context.setReceiveTimeout(1 minute)
+
+    case ReceiveTimeout ⇒
+      println("Received timeout")
+
     case _      ⇒ log.info("received unknown message")
   }
 }

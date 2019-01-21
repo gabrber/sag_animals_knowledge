@@ -19,6 +19,7 @@ import opennlp.tools.chunker.{ChunkerME, ChunkerModel}
 import org.jsoup.nodes.{Node, TextNode}
 import org.jsoup.select.NodeVisitor
 
+import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.language.postfixOps
@@ -44,6 +45,8 @@ abstract class KnowledgeAgent extends Actor {
   val HEURISTIC_CONTENT_LENGTH_THRESHOLD = 100
 
   var animalsLearnedAbout: List[String] = List()
+
+  context.setReceiveTimeout(5 minutes)
 
   def checkUrlExists(checkUrl: String): Boolean = {
     val response = Http(checkUrl).asString.code
