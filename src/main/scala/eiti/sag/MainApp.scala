@@ -24,19 +24,19 @@ object MainApp extends App {
 
   val knowledgeAgentsSupervisor = system.actorOf(Props[KnowledgeAgentsSupervisor], name="KnowledgeAgentsSupervisor")
   val webServerAgent = system.actorOf(Props[HttpServer], name="HttpServer")
+  val metaKnowledgeAgentsSupervisor = system.actorOf(Props[MetaKnowledgeAgentsSupervisor], name="MetaKnowledgeAgentsSupervisor")
+  val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
 
   if(mode == Mode.Learn) {
     println("learning")
     knowledgeAgentsSupervisor ! StartLearning()
-    val metaKnowledgeAgentsSupervisor = system.actorOf(Props[MetaKnowledgeAgentsSupervisor], name="MetaKnowledgeAgentsSupervisor")
     metaKnowledgeAgentsSupervisor ! "fetch"
   }
 
   if(mode == Mode.Explore) {
     println("exploring")
     knowledgeAgentsSupervisor ! InitAgents()
-    val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
-    TranslationAgent1 ! "greetings"
+    TranslationAgent1 ! "mainMenu"
   }
 
 }

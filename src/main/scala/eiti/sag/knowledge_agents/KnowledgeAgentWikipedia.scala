@@ -27,6 +27,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
       println("Wikipedia learning about " + animal)
       val animalUrl = baseUrl + URLEncoder.encode(animal.capitalize, "UTF-8")
 
+      println(animalUrl)
       if (checkUrlExists(animalUrl)) {
         val pageContent = fetchContent(animalUrl)
         persistAsBagOfWords(pageContent, animal, bag_of_words)

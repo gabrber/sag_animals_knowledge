@@ -2,7 +2,7 @@ package eiti.sag
 
 import java.io.{BufferedInputStream, FileInputStream}
 
-import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, PoisonPill, Props, Terminated}
+import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, Identify, Kill, PoisonPill, Props, ReceiveTimeout, Terminated}
 import akka.event.Logging
 import eiti.sag.TranslationAgent.{SingleWordInSentence, TaggedQuery}
 import eiti.sag.query.KnownPosTags.KnownPosTags
@@ -15,6 +15,7 @@ import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.tokenize.WhitespaceTokenizer
 import java.util.ArrayList
 
+import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.StartLearning
 import opennlp.tools.lemmatizer.DictionaryLemmatizer
 
 import scala.collection.JavaConverters._
@@ -27,12 +28,28 @@ class TranslationAgent extends Actor {
   val model = new POSModel(new BufferedInputStream(new FileInputStream(lexiconFileName)))
   val tagger = new POSTaggerME(model)
 
+  def mainMenu(): Unit = {
+    println("What would you like me to do?")
+    println("1 - Learn")
+    println("2 - Explore")
+    println("3 - Close")
+    var task = scala.io.StdIn.readLine()
+    task match {
+      case "1" => self ! "askToLearn"
+      case "2" => self ! "askAboutAnimal"
+      case "3" =>
+        context.system.actorSelection("/user/*") ! Kill
+        sys.exit()
+      case _ =>
+        println("Please type 1, 2 or 3")
+        mainMenu()
+    }
+  }
 
   // Get animal name from user
-  def greetings(): String = {
-    println("Hello! Which animal are you interested in?")
+  def askExplore(): String = {
+    println("Which animal are you interested in?")
     var animal = scala.io.StdIn.readLine()
-    println("Okay. Looking for information about " + animal)
     return animal
   }
 
@@ -132,22 +149,35 @@ class TranslationAgent extends Actor {
     return agent
   }
 
+  def askToLearn(): Unit = {
+    var animals = askExplore().toLowerCase
+    val animalsList = animals.replaceAll(" ","").split(",").toList
+    choseOneAgent("KnowledgeAgentsSupervisor") ! StartLearning(animalsList)
+    choseOneAgent("MetaKnowledge") ! "fetch"
+  }
+
+  def askAboutAnimals() = {
+    val animal = askExplore().toLowerCase
+    val question = getQuestion(animal)
+    val questionType = getQuestionType(question)
+    val tagged = tag(question)
+    val mainWords = getMainLemmas(tagged,question)
+    for ( i<-mainWords) println(i)
+
+    if(questionType == null){
+      log.info("Cannot resolve question type")
+    }
+
+    context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged, mainWords, animal)
+
+  }
+
   // Receive Message cases
   def receive = {
-    case "greetings" ⇒
-      val animal = greetings().toLowerCase
-      val question = getQuestion(animal)
-      val questionType = getQuestionType(question)
-      val tagged = tag(question)
-      val mainWords = getMainLemmas(tagged,question)
-      for ( i<-mainWords) println(i)
-
-      if(questionType == null){
-        log.info("Cannot resolve question type")
-      }
-
-      context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged, mainWords, animal)
-    case _      ⇒ log.info("received unknown message")
+    case "mainMenu" => mainMenu()
+    case "askAboutAnimal" => askAboutAnimals()
+    case "askToLearn" => askToLearn()
+    case _ => log.info("received unknown message")
   }
 }
 

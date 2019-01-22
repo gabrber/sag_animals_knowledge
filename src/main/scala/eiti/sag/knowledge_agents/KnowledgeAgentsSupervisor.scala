@@ -8,6 +8,7 @@ import eiti.sag.MainApp
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, KillAgent, StartLearning}
 import eiti.sag.query.UsersQueryInstance
+import jdk.nashorn.internal.runtime.OptimisticReturnFilters
 
 import scala.util.Random
 
@@ -25,7 +26,7 @@ class KnowledgeAgentsSupervisor extends Actor {
   }
 
   override def receive: Receive = {
-    case StartLearning() => startLearning()
+    case StartLearning(animals) => startLearning(animals)
     case q: UsersQueryInstance => askAQuestion(q)
     case InitAgents() => initAgents()
     case Kaboom => killSomeAgentAtRandom()
@@ -48,10 +49,8 @@ class KnowledgeAgentsSupervisor extends Actor {
     }
   }
 
-  def startLearning(): Unit = {
+  def startLearning(animals: List[String]): Unit = {
     val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
-
-
 
     val KnowledgeAgentAFS = system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgentAFS")
     val KnowledgeAgentWikipedia = system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
@@ -61,9 +60,6 @@ class KnowledgeAgentsSupervisor extends Actor {
     knowledgeAgentMap = KnowledgeAgentWikipedia :: knowledgeAgentMap
     knowledgeAgentMap = KnowledgeAgentWWF :: knowledgeAgentMap
 
-
-    // TODO - mocked
-    val animals = List("tiger", "koala", "spider", "parrot")
     for (elem <- animals) {
       KnowledgeAgentAFS ! LearnAbout(elem)
       KnowledgeAgentWikipedia ! LearnAbout(elem)
@@ -91,7 +87,7 @@ object KnowledgeAgentsSupervisor {
   val AgentName: String = "KnowledgeAgentsSupervisor"
   val FullAgentPath: String = "akka://" + MainApp.AnimalsKnowledgeSystemName +  "/user/" + AgentName
 
-  final case class StartLearning()
+  final case class StartLearning(animals: List[String] = List("tiger", "koala", "spider", "parrot"))
   final case class InitAgents()
   final case class KillAgent(name: String)
 }
