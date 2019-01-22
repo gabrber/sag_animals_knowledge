@@ -34,11 +34,10 @@ class KnowledgeAgentsSupervisor extends Actor {
   }
 
   def initAgents(): Unit = {
-    val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
 
-    val KnowledgeAgentAFS = system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgentAFS")
-    val KnowledgeAgentWikipedia = system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
-    val KnowledgeAgentWWF = system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
+    val KnowledgeAgentAFS = context.system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgentAFS")
+    val KnowledgeAgentWikipedia = context.system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
+    val KnowledgeAgentWWF = context.system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
 
     knowledgeAgentMap = KnowledgeAgentAFS :: knowledgeAgentMap
     knowledgeAgentMap = KnowledgeAgentWikipedia :: knowledgeAgentMap
@@ -50,11 +49,10 @@ class KnowledgeAgentsSupervisor extends Actor {
   }
 
   def startLearning(animals: List[String]): Unit = {
-    val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
 
-    val KnowledgeAgentAFS = system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgentAFS")
-    val KnowledgeAgentWikipedia = system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
-    val KnowledgeAgentWWF = system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
+    val KnowledgeAgentAFS = context.system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgentAFS")
+    val KnowledgeAgentWikipedia = context.system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
+    val KnowledgeAgentWWF = context.system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
 
     knowledgeAgentMap = KnowledgeAgentAFS :: knowledgeAgentMap
     knowledgeAgentMap = KnowledgeAgentWikipedia :: knowledgeAgentMap

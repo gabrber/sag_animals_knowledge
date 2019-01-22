@@ -12,8 +12,8 @@ class MetaKnowledgeAgentsSupervisor extends Actor {
 
 
   def startAgents(): Unit = {
-    val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
-    val animalSpeciesNamesProvider = system.actorOf(Props[AnimalSpeciesNamesProvider])
+
+    val animalSpeciesNamesProvider = context.system.actorOf(Props[AnimalSpeciesNamesProvider])
 
 
 
