@@ -6,6 +6,7 @@ import java.util
 
 import akka.actor.Actor
 import akka.event.Logging
+import akka.util.Timeout
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 import opennlp.tools.lemmatizer.LemmatizerME
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
@@ -33,6 +34,7 @@ import org.jsoup.nodes.Element
 
 abstract class KnowledgeAgent extends Actor {
   val log = Logging(context.system, this)
+  implicit val timeout = Timeout(10 minutes)
 
   val knowledgeBaseSep = ";"
 
@@ -47,6 +49,20 @@ abstract class KnowledgeAgent extends Actor {
   var animalsLearnedAbout: List[String] = List()
 
   context.setReceiveTimeout(2 minutes)
+
+  def learnAbout(animalUrl :String, animal :String, bag_of_words: String, ner :String, pos_ngrams: String, sentences: String, lemmaSentences : String, chunker : String)={
+
+    println(animalUrl)
+    if (checkUrlExists(animalUrl)) {
+      val pageContent = fetchContent(animalUrl)
+      persistAsBagOfWords(pageContent, animal, bag_of_words)
+      persistAsNERTokens(pageContent, animal, ner)
+      persistAsPosNgrams(pageContent, animal, pos_ngrams)
+      persistAsSentences(pageContent, animal, sentences)
+      persistAsLemmaSentences(sentences, animal, lemmaSentences)
+      persistAsChunker(pageContent, animal, chunker)
+    } else { log.info("Cannot find info about " + animal)}
+  }
 
   def checkUrlExists(checkUrl: String): Boolean = {
     val response = Http(checkUrl).asString.code
@@ -290,10 +306,11 @@ abstract class KnowledgeAgent extends Actor {
     return sentences.asScala.toArray
   }
 
-  def fetchAlreadLearnedAnimals(fileName: String) = {
+  def fetchAlreadLearnedAnimals(fileName: String) :List[String] = {
     val lines = Source.fromFile("animal_db/" + fileName).mkString.split("\n").filter(p => p.isEmpty == false)
 
     animalsLearnedAbout = lines.map(line => line.trim).toList
+    animalsLearnedAbout
   }
 
   class MyNodeVisitor(stringBuilder: StringBuilder) extends NodeVisitor {
