@@ -24,7 +24,7 @@ class TranslationAgent extends Actor {
   val log = Logging(context.system, this)
 
   val lexiconFileName = "database/en-pos-maxent.bin"
-
+  context.setReceiveTimeout(2 minutes)
   val model = new POSModel(new BufferedInputStream(new FileInputStream(lexiconFileName)))
   val tagger = new POSTaggerME(model)
 
@@ -177,6 +177,9 @@ class TranslationAgent extends Actor {
     case "mainMenu" => mainMenu()
     case "askAboutAnimal" => askAboutAnimals()
     case "askToLearn" => askToLearn()
+    case ReceiveTimeout =>
+      println("I was waiting sooo long. Let's try again.")
+      mainMenu()
     case _ => log.info("received unknown message")
   }
 }

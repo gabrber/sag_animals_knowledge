@@ -46,7 +46,7 @@ abstract class KnowledgeAgent extends Actor {
 
   var animalsLearnedAbout: List[String] = List()
 
-  context.setReceiveTimeout(5 minutes)
+  context.setReceiveTimeout(2 minutes)
 
   def checkUrlExists(checkUrl: String): Boolean = {
     val response = Http(checkUrl).asString.code
