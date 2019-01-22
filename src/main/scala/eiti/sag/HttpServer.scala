@@ -29,11 +29,10 @@ class HttpServer extends Actor {
 
   val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
-  println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-  StdIn.readLine() // let it run until user presses return
+  println(s"Server online at http://localhost:8080/")
   bindingFuture
-    .flatMap(_.unbind()) // trigger unbinding from the port
-    .onComplete(_ => actorSystem.terminate()) // and shutdown when done
+    .flatMap(_.unbind())
+    .onComplete(_ => {})
 
   override def receive: Receive = {
     case _ => println("Webserver received a msg")
