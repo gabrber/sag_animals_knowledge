@@ -7,6 +7,7 @@ import java.util
 import akka.actor.Actor
 import akka.event.Logging
 import akka.util.Timeout
+import eiti.sag.knowledge_agents.KnowledgeAgent.FetchedAlreadyLearnedAnimals
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 import opennlp.tools.lemmatizer.LemmatizerME
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
@@ -306,11 +307,10 @@ abstract class KnowledgeAgent extends Actor {
     return sentences.asScala.toArray
   }
 
-  def fetchAlreadLearnedAnimals(fileName: String) :List[String] = {
+  def fetchAlreadLearnedAnimals(fileName: String)  = {
     val lines = Source.fromFile("animal_db/" + fileName).mkString.split("\n").filter(p => p.isEmpty == false)
 
     animalsLearnedAbout = lines.map(line => line.trim).toList
-    animalsLearnedAbout
   }
 
   class MyNodeVisitor(stringBuilder: StringBuilder) extends NodeVisitor {
@@ -356,6 +356,10 @@ abstract class KnowledgeAgent extends Actor {
     super.preRestart(reason, message)
   }
 
+  override def postRestart(reason: Throwable): Unit = {
+    println("Agent restarted")
+    self ! FetchedAlreadyLearnedAnimals()
+  }
 
   def kaboom() = {
     1 / 0

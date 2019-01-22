@@ -42,9 +42,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
       context.setReceiveTimeout(1 minute)
 
     case usersQueryInstance: UsersQueryInstance =>
-      var alreadyKnown :List[String] = fetchAlreadLearnedAnimals(learned_animals)
-
-      if (!alreadyKnown.contains(usersQueryInstance.animal)) {
+      if (!animalsLearnedAbout.contains(usersQueryInstance.animal)) {
         println("Wikipedia - I don't know anything about this animal. Let me learn.")
         learn(usersQueryInstance.animal)
       }
