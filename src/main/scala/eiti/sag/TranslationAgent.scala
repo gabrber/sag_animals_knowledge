@@ -34,7 +34,7 @@ class TranslationAgent extends Actor {
   def mainMenu(): Unit = {
     println("What would you like me to do?")
     println("1 - Learn")
-    println("2 - Explore")
+    println("2 - Answer my question")
     println("3 - Close")
     var task = scala.io.StdIn.readLine()
     task match {
