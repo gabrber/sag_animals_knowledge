@@ -25,7 +25,7 @@ class AnswerAgent extends Actor {
     if(answers.isEmpty) {
       println("Sorry, cant answer")
     } else {
-      val answer = answers.sortBy(_.percentSure).head.answer
+      val answer = answers.sortBy(_.percentSure).last.answer
       println("Found answer: " + answer)
       val call = context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent").resolveOne()
       var agent = Await.result(call,5 second)
