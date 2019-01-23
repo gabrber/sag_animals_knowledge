@@ -41,8 +41,20 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
     case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animalsFile)
 
     case LearnAbout(animal: String) =>
-      learn(animal)
-      context.setReceiveTimeout(1 minute)
+      if(animalsLearnedAbout.contains(animal) == false) {
+        try {
+          learn(animal)
+          context.setReceiveTimeout(1 minute)
+        } catch {
+          case t: Throwable =>
+            animalsLearnedAbout = animal :: animalsLearnedAbout
+            persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
+            throw t
+        }
+        animalsLearnedAbout = animal :: animalsLearnedAbout
+        persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
+      }
+
       askForAnimalToLearnAbout()
 
     case usersQueryInstance: UsersQueryInstance =>
