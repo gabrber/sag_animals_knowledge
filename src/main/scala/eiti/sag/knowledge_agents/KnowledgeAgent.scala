@@ -60,21 +60,23 @@ abstract class KnowledgeAgent extends Actor {
   val chunker = new ChunkerME(new ChunkerModel(new BufferedInputStream(new FileInputStream(chunkerModelFile))))
 
   def learnAbout(animalUrl :String, animal :String, bag_of_words: String, ner :String, pos_ngrams: String, sentences: String, lemmaSentences : String, chunker : String)={
+    try {
+      val pageContent = fetchContent(animalUrl)
+      //println(pageContent)
+      //println("persistAsBagOfWords()")
+      persistAsBagOfWords(pageContent, animal, bag_of_words)
+      //println("persistAsNERTokens()")
+      persistAsNERTokens(pageContent, animal, ner)
+      //println("persistAsPosNgrams()")
+      persistAsPosNgrams(pageContent, animal, pos_ngrams)
+      //println("persistAsSentences()")
+      persistAsSentences(pageContent, animal, sentences)
+      //println("persistAsLemmaSentences()")
+      persistAsLemmaSentences(sentences, animal, lemmaSentences)
+      //println("persistAsChunker()")
+      persistAsChunker(pageContent, animal, chunker)
+    } catch { case _ => log.warning("Error while learning") }
 
-    val pageContent = fetchContent(animalUrl)
-    println(pageContent)
-    println("persistAsBagOfWords()")
-    persistAsBagOfWords(pageContent, animal, bag_of_words)
-    println("persistAsNERTokens()")
-    persistAsNERTokens(pageContent, animal, ner)
-    println("persistAsPosNgrams()")
-    persistAsPosNgrams(pageContent, animal, pos_ngrams)
-    println("persistAsSentences()")
-    persistAsSentences(pageContent, animal, sentences)
-    println("persistAsLemmaSentences()")
-    persistAsLemmaSentences(sentences, animal, lemmaSentences)
-    println("persistAsChunker()")
-    persistAsChunker(pageContent, animal, chunker)
   }
 
   def checkUrlExists(checkUrl: String): Boolean = {
