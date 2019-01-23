@@ -28,12 +28,12 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   def learn(animal :String): Unit = {
-    println("AFS learning about " + animal)
+    log.info("AFS learning about " + animal)
     var animalUrl = ""
     if (animal.toLowerCase == "dog"){animalUrl = baseUrl + "All-About-Dogs.html"}
     else {animalUrl = baseUrl + animal.capitalize + "-facts.html"}
 
-    println(animalUrl)
+    log.info(animalUrl)
     if (checkUrlExists(animalUrl)) {
 
       getTables(animalUrl, animal)
@@ -41,7 +41,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
 
       animalsLearnedAbout = animal :: animalsLearnedAbout
       persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
-      println("AFS finished learning about " + animal)
+      log.info("AFS finished learning about " + animal)
     } else { log.info("Cannot find info about " + animal)}
   }
 
@@ -52,7 +52,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
       try {
         learn(animal)
 
-        println("AFS learning about " + animal)
+        log.info("AFS learning about " + animal)
         val animalUrl = if (animal.toLowerCase == "dog")
           baseUrl + "All-About-Dogs.html"
         else baseUrl + animal.capitalize + "-facts.html"
@@ -83,14 +83,14 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
         case _ =>
           try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile, usersQueryInstance)}
           catch {
-            case _ => println("Cannot find sentence")
+            case _ => log.warning("Cannot find sentence")
             sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)}
       }
-      println("AFS is done")
+      log.info("AFS is done")
       context.setReceiveTimeout(1 minute)
 
     case ReceiveTimeout ⇒
-      println("Received timeout")
+      log.info("Received timeout")
 
     case _      ⇒ log.info("received unknown message")
   }

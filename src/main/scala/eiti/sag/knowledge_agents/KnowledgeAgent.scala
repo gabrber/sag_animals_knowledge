@@ -115,13 +115,13 @@ abstract class KnowledgeAgent extends Actor {
 
   def persistAsNERTokens(pageContent: String, animal: String, dirname: String): Unit = {
 
-    println("Loading model ...")
+    log.info("Loading model ...")
 
 //    val bis = new BufferedInputStream(new FileInputStream(locationModelFile))
 //    val model = new TokenNameFinderModel(bis)
 //    val nameFinder = new NameFinderME(model)
 
-    println("Model loaded. Tokenizing ...")
+    log.info("Model loaded. Tokenizing ...")
     val tokens = tokenize(pageContent)
     val nameSpans = nameFinder.find(tokens)
 
@@ -208,7 +208,7 @@ abstract class KnowledgeAgent extends Actor {
 //    val posModel = new POSModel(pos)
 //    val posTagger = new POSTaggerME(posModel)
     val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
-    println("tokens done")
+    log.info("tokens done")
     val tags = posTagger.tag(tokens)
     val posSentence = new POSSample(tokens, tags)
     posSentence
@@ -313,7 +313,7 @@ abstract class KnowledgeAgent extends Actor {
       for (lemma <- mainLemma) if (checkLine.contains(lemma)) sentences.add(readSent.get(i))
     }
     readLemma.close
-    for(i <- sentences.asScala.toArray) println(i)
+    for(i <- sentences.asScala.toArray) log.info(i)
     val size = sentences.size()
     //println(sentences.size())
     sendAnswer(question,sentences.asScala.toList.toString,size.toFloat)
@@ -354,7 +354,7 @@ abstract class KnowledgeAgent extends Actor {
     val content = Source.fromFile("animal_db/" + dirname + "/" + question.animal + ".txt").mkString
     val answer = content.replaceAll(";"," - ").split("\n").filter(line => !line.isEmpty)
     val size = answer.size
-    println(size)
+    log.info(size.toString)
 /*    println(question)
     println(answer)
     println(size.toFloat)*/
@@ -372,19 +372,19 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   override def postStop(): Unit = {
-    println("Agent postStop method")
+    log.info("Agent postStop method")
     super.postStop()
   }
 
   override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
-    println("Agent preRestart method")
+    log.info("Agent preRestart method")
     super.preRestart(reason, message)
   }
 
   override def postRestart(reason: Throwable): Unit = {
-    println("Agent restarted")
+    log.warning("Knowledge agent restarted")
     self ! FetchedAlreadyLearnedAnimals()
-    self ! LearnAbout("white shark")
+    //self ! LearnAbout("white shark")
   }
 
   def kaboom() = {
@@ -396,7 +396,7 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   def sendAnswer(query: UsersQueryInstance, answer: String, percentSure: Float): Unit = {
-    println("Sending Answer")
+    log.info("Sending Answer")
     val call = context.actorSelection("../AnswerAgent*").resolveOne(15 seconds)
     var agent = Await.result(call,15 second)
     agent ! FoundAnswer(query, answer, percentSure)

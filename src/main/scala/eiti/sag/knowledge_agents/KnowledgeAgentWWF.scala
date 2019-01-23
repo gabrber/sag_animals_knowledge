@@ -24,7 +24,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
   val baseUrl = "https://www.worldwildlife.org/species/"
 
   def learn(animal : String): Unit ={
-    println("WWF learning about " + animal)
+    log.info("WWF learning about " + animal)
     val animalUrl = baseUrl + animal
     if (checkUrlExists(animalUrl)) {
       getTables(animalUrl, animal)
@@ -32,7 +32,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
 
       animalsLearnedAbout = animal :: animalsLearnedAbout
       persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
-      println("WWF finished learning " + animal)
+      log.info("WWF finished learning " + animal)
     } else { log.info("Cannot find info about " + animal)}
   }
 
@@ -59,7 +59,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
 
     case usersQueryInstance: UsersQueryInstance =>
       if (!animalsLearnedAbout.contains(usersQueryInstance.animal)) {
-        println("WWF - I don't know anything about this animal. Let me learn.")
+        ("WWF - I don't know anything about this animal. Let me learn.")
         learn(usersQueryInstance.animal)
       }
 
@@ -71,14 +71,14 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         case QueryType.Location => searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
         case _ =>
           try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile,usersQueryInstance)}
-          catch { case _ => println("Cannot find sentence")
+          catch { case _ => log.warning("Cannot find sentence")
             sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)}
       }
 
-      println("WWF is done")
+      log.info("WWF is done")
       context.setReceiveTimeout(1 minute)
     case ReceiveTimeout ⇒
-      println("Received timeout")
+      log.info("Received timeout")
 
     case _      ⇒ log.info("received unknown message")
   }

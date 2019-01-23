@@ -26,9 +26,9 @@ object MainApp extends App {
   val webServerAgent = system.actorOf(Props[HttpServer], name="HttpServer")
   val metaKnowledgeAgentsSupervisor = system.actorOf(Props[MetaKnowledgeAgentsSupervisor], name="MetaKnowledgeAgentsSupervisor")
   val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
-  val TranslationAgent2 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent2")
+  //val TranslationAgent2 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent2")
   val AnswerAgent = system.actorOf(Props[AnswerAgent], name = "AnswerAgent")
-  val AnswerAgent2 = system.actorOf(Props[AnswerAgent], name = "AnswerAgent2")
+  //val AnswerAgent2 = system.actorOf(Props[AnswerAgent], name = "AnswerAgent2")
 
   if(mode == Mode.Learn) {
     metaKnowledgeAgentsSupervisor ! "start"

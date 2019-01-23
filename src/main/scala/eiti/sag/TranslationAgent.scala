@@ -98,16 +98,16 @@ class TranslationAgent extends Actor {
         if ( whitespaceTokenizerLine.length > 1){
           whitespaceTokenizerLine(1) match {
             case "is" | "are" =>
-              println("looking for noun")
+              log.info("looking for noun")
               for (word <- tag.sentence.filter(!stopwords.contains(_)))
                 word.posRaw match {
                   case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
                   case _ =>
                 }
             case "do" | "does" | "did" =>
-              println("looking for verb")
+              log.info("looking for verb")
               for (word <- tag.sentence.filter(!stopwords.contains(_))){
-                println(word)
+                log.info(word.toString)
                 word.posRaw match {
                   case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[\\?\\!,.]",""), word.posRaw))
                   case _ =>
@@ -124,7 +124,7 @@ class TranslationAgent extends Actor {
         println("Can you be more specific?")
         self ! askAboutAnimals()
     }
-    for(i <- foundWord.asScala.toList) println(i)
+    for(i <- foundWord.asScala.toList) log.info(i.toString())
     return foundWord.asScala.toList
   }
 
@@ -140,7 +140,7 @@ class TranslationAgent extends Actor {
       if (lemmaWord == "O") lemma(i) = tokens.asScala.toList(i)
     }
     val lemmaNoStop = lemma.filter(!stopwords.contains(_))
-    for(i <- lemmaNoStop) println(i)
+    for(i <- lemmaNoStop) log.info(i)
     return lemmaNoStop
   }
 
@@ -198,6 +198,13 @@ class TranslationAgent extends Actor {
       println("I was waiting sooo long. Let's try again.")
       mainMenu()
     case _ => log.info("received unknown message")
+  }
+
+  override def postRestart(reason: Throwable): Unit = {
+    log.warning("Translation Agent restarted")
+    println("Sorry, I was dead. Let's start again")
+    self ! "mainMenu"
+    //self ! LearnAbout("white shark")
   }
 }
 

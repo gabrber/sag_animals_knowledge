@@ -3,6 +3,7 @@ package eiti.sag.knowledge_agents
 import scala.concurrent.duration._
 import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume, Stop}
 import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, PoisonPill, Props, SupervisorStrategy}
+import akka.event.Logging
 import eiti.sag.HttpServer.Kaboom
 import eiti.sag.MainApp
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
@@ -14,6 +15,7 @@ import scala.util.Random
 class KnowledgeAgentsSupervisor extends Actor {
 
   var knowledgeAgentMap: List[ActorRef] = List()
+  val log = Logging(context.system, this)
 
   def killSomeAgentAtRandom(): Unit = {
     val chosenAgent = knowledgeAgentMap(new Random().nextInt(knowledgeAgentMap.size))
@@ -27,7 +29,7 @@ class KnowledgeAgentsSupervisor extends Actor {
     case q: UsersQueryInstance => askAQuestion(q)
     case InitAgents() => initAgents()
     case Kaboom => killSomeAgentAtRandom()
-    case _ => println("Supervisor - unknown message received")
+    case _ => log.info("Supervisor - unknown message received")
   }
 
   def initAgents(): Unit = {

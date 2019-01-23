@@ -1,10 +1,13 @@
 package eiti.sag.meta_knowledge_agents
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.event.Logging
 import eiti.sag.MainApp
 import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.{AskForAnimalSpecies, FindAnimalSpeciesToLearn}
 
 class MetaKnowledgeAgentsSupervisor extends Actor {
+
+  val log = Logging(context.system, this)
 
   var animalSpeciesNamesProvider: ActorRef = null
 
@@ -15,7 +18,7 @@ class MetaKnowledgeAgentsSupervisor extends Actor {
         startAgents()
       }
       animalSpeciesNamesProvider ! FindAnimalSpeciesToLearn(replyTo, animalsLearnedAbout)
-    case _ => println("MetaKnowledgeAgentsSupervisor - unknown message received")
+    case _ => log.info("MetaKnowledgeAgentsSupervisor - unknown message received")
   }
 
 

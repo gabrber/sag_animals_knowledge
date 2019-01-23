@@ -1,6 +1,7 @@
 package eiti.sag.meta_knowledge_agents
 
 import akka.actor.Actor
+import akka.event.Logging
 import eiti.sag.knowledge_agents.KnowledgeAgent.LearnAbout
 import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.FindAnimalSpeciesToLearn
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
@@ -11,6 +12,7 @@ import org.jsoup.select.NodeVisitor
 class AnimalSpeciesNamesProvider extends Actor {
 
   var animalList: List[String] = List()
+  val log = Logging(context.system, this)
 
   def doFetchAnimalNames(): Unit = {
 
@@ -48,13 +50,13 @@ class AnimalSpeciesNamesProvider extends Actor {
       else {
         val animals = animalList.filter(a => msg.animalsLearnedAbout.contains(a) == false)
         if(animals.isEmpty) {
-          println("Need to crawl more species names")
+          log.info("Need to crawl more species names")
         } else {
           msg.sendTo ! LearnAbout(animals.head)
         }
       }
     case "fetch" =>
       doFetchAnimalNames()
-    case _ => println("Dont understand message")
+    case _ => log.info("Dont understand message")
   }
 }

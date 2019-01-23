@@ -22,14 +22,14 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
   val baseUrl = "https://en.wikipedia.org/wiki/"
 
   def learn(animal :String): Unit = {
-    println("Wikipedia learning about " + animal)
+    log.info("Wikipedia learning about " + animal)
     val animalUrl = baseUrl + URLEncoder.encode(animal.capitalize, "UTF-8")
     if (checkUrlExists(animalUrl)) {
       learnAbout(animalUrl, animal, bag_of_wordsFile, nerFile, pos_ngramsFile, sentencesFile, lemmaSentencesFile, chunkerFile)
     }  else { log.info("Cannot find info about " + animal)}
     animalsLearnedAbout = animal :: animalsLearnedAbout
     persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
-    println("Wikipedia finished learning about " + animal)
+    log.info("Wikipedia finished learning about " + animal)
   }
 
   override def receive = {
@@ -64,15 +64,15 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
         case QueryType.Location => searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
         case _ =>
           try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile, usersQueryInstance)}
-          catch { case _ => println("Cannot find sentence")
+          catch { case _ => log.warning("Cannot find sentence")
             sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)}
       }
 
-      println("Wikipedia is done")
+      log.info("Wikipedia is done")
       context.setReceiveTimeout(1 minute)
 
     case ReceiveTimeout ⇒
-      println("Received timeout")
+      log.info("Received timeout")
 
     case _      ⇒ log.info("received unknown message")
   }

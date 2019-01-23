@@ -47,7 +47,7 @@ class AnswerAgent extends Actor {
       implicit val executionContext = context.system.dispatcher
       context.system.scheduler.scheduleOnce(15 second, self, ForceAnswerNow(q))
     case f: FoundAnswer =>
-      println("GOT ANSWER")
+      log.info("GOT ANSWER")
       val newAnswers = if(queryToFoundAnswerList.contains(f.query.originalQuery)) {
         f :: queryToFoundAnswerList(f.query.originalQuery)
       } else {
