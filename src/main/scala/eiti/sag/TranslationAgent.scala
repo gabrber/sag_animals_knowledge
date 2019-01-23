@@ -16,7 +16,6 @@ import opennlp.tools.tokenize.WhitespaceTokenizer
 import java.util.ArrayList
 
 import eiti.sag.knowledge_agents.KnowledgeAgent.LearnAbout
-import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.StartLearning
 import opennlp.tools.lemmatizer.DictionaryLemmatizer
 
 import scala.collection.JavaConverters._

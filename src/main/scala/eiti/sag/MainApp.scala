@@ -1,6 +1,5 @@
 package eiti.sag
 
-import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{ActorSystem, OneForOneStrategy, Props}
 
 import scala.language.postfixOps
@@ -28,14 +27,12 @@ object MainApp extends App {
   val TranslationAgent1 = system.actorOf(Props[TranslationAgent], name = "SystemUserAgent1")
 
   if(mode == Mode.Learn) {
-    println("learning")
     knowledgeAgentsSupervisor ! InitAgents()
     knowledgeAgentsSupervisor ! StartLearning()
     metaKnowledgeAgentsSupervisor ! "start"
   }
 
   if(mode == Mode.Explore) {
-    println("exploring")
     knowledgeAgentsSupervisor ! InitAgents()
     TranslationAgent1 ! "mainMenu"
   }

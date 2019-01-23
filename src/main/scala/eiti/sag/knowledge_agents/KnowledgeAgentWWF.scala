@@ -1,7 +1,6 @@
 package eiti.sag.knowledge_agents
 
 import java.io.{BufferedWriter, File, FileNotFoundException, FileWriter}
-import java.lang.Exception
 
 import akka.actor.ReceiveTimeout
 

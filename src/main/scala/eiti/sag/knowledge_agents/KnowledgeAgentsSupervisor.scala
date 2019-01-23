@@ -8,20 +8,16 @@ import eiti.sag.MainApp
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, KillAgent, StartLearning}
 import eiti.sag.query.UsersQueryInstance
-import jdk.nashorn.internal.runtime.OptimisticReturnFilters
 
 import scala.util.Random
 
 class KnowledgeAgentsSupervisor extends Actor {
 
-
   var knowledgeAgentMap: List[ActorRef] = List()
 
   def killSomeAgentAtRandom(): Unit = {
     val chosenAgent = knowledgeAgentMap(new Random().nextInt(knowledgeAgentMap.size))
-
     println("Sending Kaboom to: " + chosenAgent.path)
-
     chosenAgent ! Kaboom
   }
 
@@ -30,7 +26,7 @@ class KnowledgeAgentsSupervisor extends Actor {
     case q: UsersQueryInstance => askAQuestion(q)
     case InitAgents() => initAgents()
     case Kaboom => killSomeAgentAtRandom()
-    case _ => println("Supervisor - dont know how to handle it")
+    case _ => println("Supervisor - unknown message received")
   }
 
   def initAgents(): Unit = {
@@ -49,8 +45,6 @@ class KnowledgeAgentsSupervisor extends Actor {
   }
 
   def startLearning(): Unit = {
-    val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
-
     val KnowledgeAgentAFS = context.system. actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentAFS")
     val KnowledgeAgentWikipedia = context.system.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentWikipedia")
     val KnowledgeAgentWWF = context.system.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentWWF")
@@ -68,10 +62,7 @@ class KnowledgeAgentsSupervisor extends Actor {
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _ =>
-        // TODO - to chyba nie działa, bo wykorzystywany jest defaultowe strategy
-        println("in supervisor strategy")
-        Restart
+      case _ => Restart
     }
 }
 

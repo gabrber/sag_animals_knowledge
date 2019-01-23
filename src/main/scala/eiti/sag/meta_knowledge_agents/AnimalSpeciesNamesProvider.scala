@@ -44,7 +44,6 @@ class AnimalSpeciesNamesProvider extends Actor {
     case msg: FindAnimalSpeciesToLearn =>
       if(animalList.isEmpty) self ! msg
       else {
-        println("alread learned: " + msg.animalsLearnedAbout)
         val animals = animalList.filter(a => msg.animalsLearnedAbout.contains(a) == false)
         if(animals.isEmpty) {
           println("Need to crawl more species names")

@@ -8,13 +8,11 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import eiti.sag.HttpServer.Kaboom
 
-import scala.io.StdIn
 import scala.util.Random
 
 class HttpServer extends Actor {
   implicit val actorSystem = context.system
   implicit val materializer = ActorMaterializer()
-  // needed for the future flatMap/onComplete in the end
   implicit val executionContext = actorSystem.dispatcher
   val random = new Random()
 
