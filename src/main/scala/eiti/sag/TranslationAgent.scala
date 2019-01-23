@@ -4,7 +4,7 @@ import java.io.{BufferedInputStream, FileInputStream}
 
 import akka.actor.{Actor, ActorRef, ActorSelection, ActorSystem, Identify, Kill, PoisonPill, Props, ReceiveTimeout, Terminated}
 import akka.event.Logging
-import eiti.sag.TranslationAgent.{SingleWordInSentence, TaggedQuery}
+import eiti.sag.TranslationAgent.{Initial, SingleWordInSentence, TaggedQuery}
 import eiti.sag.query.KnownPosTags.KnownPosTags
 
 import scala.concurrent.duration._
@@ -19,6 +19,7 @@ import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.StartLearning
 import opennlp.tools.lemmatizer.DictionaryLemmatizer
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 
 class TranslationAgent extends Actor {
   val log = Logging(context.system, this)
@@ -27,6 +28,8 @@ class TranslationAgent extends Actor {
   context.setReceiveTimeout(2 minutes)
   val model = new POSModel(new BufferedInputStream(new FileInputStream(lexiconFileName)))
   val tagger = new POSTaggerME(model)
+
+  var stopwords: List[String] = List()
 
   def mainMenu(): Unit = {
     println("What would you like me to do?")
@@ -95,16 +98,17 @@ class TranslationAgent extends Actor {
           whitespaceTokenizerLine(1) match {
             case "is" | "are" =>
               println("looking for noun")
-              for (word <- tag.sentence)
+              for (word <- tag.sentence.filter(!stopwords.contains(_)))
                 word.posRaw match {
-                  case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""),word.posRaw))
+                  case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
                   case _ =>
                 }
             case "do" | "does" | "did" =>
               println("looking for verb")
-              for (word <- tag.sentence){
+              for (word <- tag.sentence.filter(!stopwords.contains(_))){
+                println(word)
                 word.posRaw match {
-                  case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""), word.posRaw))
+                  case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[\\?\\!,.]",""), word.posRaw))
                   case _ =>
                 }
               }
@@ -114,6 +118,7 @@ class TranslationAgent extends Actor {
 
       case _ => println("I don't know what to do :(")
     }
+    for(i <- foundWord.asScala.toList) println(i)
     return foundWord.asScala.toList
   }
 
@@ -128,7 +133,9 @@ class TranslationAgent extends Actor {
     for ((lemmaWord,i) <- lemma.zipWithIndex){
       if (lemmaWord == "O") lemma(i) = tokens.asScala.toList(i)
     }
-    return lemma
+    val lemmaNoStop = lemma.filter(!stopwords.contains(_))
+    for(i <- lemmaNoStop) println(i)
+    return lemmaNoStop
   }
 
   // Choose one Agent with name matching pattern
@@ -153,11 +160,10 @@ class TranslationAgent extends Actor {
 
   def askAboutAnimals() = {
     val animal = askExplore().toLowerCase
-    val question = getQuestion(animal)
+    val question = getQuestion(animal).replaceAll("[\\?\\!,.]","")
     val questionType = getQuestionType(question)
     val tagged = tag(question)
     val mainWords = getMainLemmas(tagged,question)
-    for ( i<-mainWords) println(i)
 
     if(questionType == null){
       log.info("Cannot resolve question type")
@@ -167,8 +173,14 @@ class TranslationAgent extends Actor {
 
   }
 
+  def getStopWords() = {
+    val lines = Source.fromFile("database/stopwords").mkString.split("\n").filter(p => p.isEmpty == false)
+    stopwords = lines.map(line => line.trim).toList
+  }
+
   // Receive Message cases
   def receive = {
+    case Initial() => getStopWords()
     case "mainMenu" => mainMenu()
     case "askAboutAnimal" => askAboutAnimals()
     case "askToLearn" => askToLearn()
@@ -181,6 +193,7 @@ class TranslationAgent extends Actor {
 
 object TranslationAgent {
   case class SingleWordInSentence(word: String, posRaw: String, pos: KnownPosTags, index: Int)
+  final case class Initial()
 
   case class TaggedQuery(sentence: Array[SingleWordInSentence]) {
     assert(sentence.map(word => word.index).sorted sameElements  sentence.map(w => w.index))

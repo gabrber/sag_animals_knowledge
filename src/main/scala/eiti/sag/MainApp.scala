@@ -2,6 +2,7 @@ package eiti.sag
 
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{ActorSystem, OneForOneStrategy, Props}
+import eiti.sag.TranslationAgent.Initial
 
 import scala.language.postfixOps
 import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.{InitAgents, StartLearning}
@@ -37,6 +38,7 @@ object MainApp extends App {
   if(mode == Mode.Explore) {
     println("exploring")
     knowledgeAgentsSupervisor ! InitAgents()
+    TranslationAgent1 ! Initial()
     TranslationAgent1 ! "mainMenu"
   }
 
