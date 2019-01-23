@@ -24,38 +24,37 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
   val tables = "wwf/tables"
   val baseUrl = "https://www.worldwildlife.org/species/"
 
+  def learn(animal : String): Unit ={
+    println("WWF learning about " + animal)
+    val animalUrl = baseUrl + animal
+
+    getTables(animalUrl,animal)
+    learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
+
+    animalsLearnedAbout = animal :: animalsLearnedAbout
+    persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+    println("WWF finished learning " + animal)
+  }
+
   override def receive = {
     case Kaboom => kaboom()
     case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
 
     case LearnAbout(animal: String) =>
-      println("WWF learning about " + animal)
-      val animalUrl = baseUrl + animal
-
-      println(animalUrl)
-      if (checkUrlExists(animalUrl)) {
-        getTables(animalUrl,animal)
-        val pageContent = fetchContent(animalUrl)
-        persistAsBagOfWords(pageContent, animal, bag_of_words)
-        persistAsNERTokens(pageContent, animal, ner)
-        persistAsPosNgrams(pageContent, animal, pos_ngrams)
-        persistAsSentences(pageContent, animal, sentences)
-        persistAsLemmaSentences(sentences, animal, lemmaSentences)
-        persistAsChunker(pageContent, animal, chunker)
-
-        animalsLearnedAbout = animal :: animalsLearnedAbout
-        persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
-        println("WWF has learned about " + animal)
-      } else { log.info("Cannot find info about " + animal)}
+      learn(animal)
       context.setReceiveTimeout(1 minute)
 
     case usersQueryInstance: UsersQueryInstance =>
+      if (!animalsLearnedAbout.contains(usersQueryInstance.animal)) {
+        println("WWF - I don't know anything about this animal. Let me learn.")
+        learn(usersQueryInstance.animal)
+      }
+
       searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
       try { val full_sent = findSentence(usersQueryInstance.mainWords, usersQueryInstance.animal, lemmaSentences, sentences)
       } catch { case _ => println("Cannot find sentence")}
       println("WWF is done")
       context.setReceiveTimeout(1 minute)
-
     case ReceiveTimeout ⇒
       println("Received timeout")
 
