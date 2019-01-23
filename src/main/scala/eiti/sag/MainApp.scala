@@ -29,9 +29,9 @@ object MainApp extends App {
   val AnswerAgent = system.actorOf(Props[AnswerAgent], name = "AnswerAgent")
 
   if(mode == Mode.Learn) {
+    metaKnowledgeAgentsSupervisor ! "start"
     knowledgeAgentsSupervisor ! InitAgents()
     knowledgeAgentsSupervisor ! StartLearning()
-    metaKnowledgeAgentsSupervisor ! "start"
   }
 
   if(mode == Mode.Explore) {
