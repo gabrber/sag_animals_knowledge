@@ -1,7 +1,6 @@
 package eiti.sag.knowledge_agents
 
 import java.io.{BufferedWriter, File, FileNotFoundException, FileWriter}
-import java.lang.Exception
 
 import akka.actor.ReceiveTimeout
 
@@ -44,6 +43,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
     case LearnAbout(animal: String) =>
       learn(animal)
       context.setReceiveTimeout(1 minute)
+      askForAnimalToLearnAbout()
 
     case usersQueryInstance: UsersQueryInstance =>
       if (!animalsLearnedAbout.contains(usersQueryInstance.animal)) {

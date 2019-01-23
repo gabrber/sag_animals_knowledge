@@ -7,7 +7,8 @@ import java.util
 import akka.actor.Actor
 import akka.event.Logging
 import akka.util.Timeout
-import eiti.sag.knowledge_agents.KnowledgeAgent.FetchedAlreadyLearnedAnimals
+import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
+import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.AskForAnimalSpecies
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 import opennlp.tools.lemmatizer.LemmatizerME
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
@@ -173,10 +174,8 @@ abstract class KnowledgeAgent extends Actor {
 
   def createNgram(pageContent: String) = {
     val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
-    //val tokens = tokenize(pageContent)
     val nGramModel = new NGramModel
     nGramModel.add(new StringList(tokens: _*),2,3)
-    //println("Total ngrams: " + nGramModel.numberOfGrams)
     nGramModel.toDictionary()
   }
 
@@ -200,19 +199,10 @@ abstract class KnowledgeAgent extends Actor {
     for(ngramList <- ngramPos) {
       for (i <- ngramList.asScala.toArray)
         for (elem <- i.split(","))
-          //for (i <- elem.split("_")) bw.write(i + knowledgeBaseSep)
           bw.write(elem + knowledgeBaseSep)
       bw.write("\n")
     }
     bw.close()
-
-
-//    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
-//    val bw = new BufferedWriter(new FileWriter(file))
-//    for (elem <- locationToWeightedCertaintyMap.keys) {
-//      bw.write(elem + knowledgeBaseSep + locationToWeightedCertaintyMap(elem) + "\n")
-//    }
-//    bw.close()
   }
 
   def persistAsSentences(pageContent :String,animal :String,dirname :String) = {
@@ -250,7 +240,6 @@ abstract class KnowledgeAgent extends Actor {
     val pos = new BufferedInputStream(new FileInputStream(posModelFile))
     val posModel = new POSModel(pos)
     val posTagger = new POSTaggerME(posModel)
-    //val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
     val tokens = tokenize(pageContent)
     val tags = posTagger.tag(tokens)
     (tokens,tags)
@@ -292,7 +281,6 @@ abstract class KnowledgeAgent extends Actor {
     var sentences = new util.ArrayList[String]
 
     val readLemma = Source.fromFile("animal_db/" + lemma_dir + "/" + animal + ".txt")
-    //val readSent = Source.fromFile("animal_db/" + lemma_dir + "/" + sent_dir + ".txt")
     val readSent = Files.readAllLines(Paths.get("animal_db/" + sent_dir + "/" + animal + ".txt"))
 
     for ((line,i) <- readLemma.getLines.zipWithIndex) {
@@ -356,10 +344,15 @@ abstract class KnowledgeAgent extends Actor {
   override def postRestart(reason: Throwable): Unit = {
     println("Agent restarted")
     self ! FetchedAlreadyLearnedAnimals()
+    self ! LearnAbout("white shark")
   }
 
   def kaboom() = {
     1 / 0
+  }
+
+  def askForAnimalToLearnAbout() = {
+    context.actorSelection("../MetaKnowledgeAgentsSupervisor") ! AskForAnimalSpecies(animalsLearnedAbout)
   }
 }
 

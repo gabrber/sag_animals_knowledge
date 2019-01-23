@@ -15,7 +15,7 @@ import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.tokenize.WhitespaceTokenizer
 import java.util.ArrayList
 
-import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.StartLearning
+import eiti.sag.knowledge_agents.KnowledgeAgent.LearnAbout
 import opennlp.tools.lemmatizer.DictionaryLemmatizer
 
 import scala.collection.JavaConverters._
@@ -153,8 +153,11 @@ class TranslationAgent extends Actor {
 
   def askToLearn(): Unit = {
     var animals = askExplore().toLowerCase
-    val animalsList = animals.replaceAll(" ","").split(",").toList
-    choseOneAgent("KnowledgeAgentsSupervisor") ! StartLearning(animalsList)
+    val animalsList: List[String] = animals.replaceAll(" ","").split(",").toList
+    for (elem <- animalsList) {
+      choseOneAgent("KnowledgeAgentsSupervisor") ! LearnAbout(elem)
+    }
+
     choseOneAgent("MetaKnowledge") ! "fetch"
   }
 

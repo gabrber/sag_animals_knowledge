@@ -11,7 +11,6 @@ object KnownPosTags extends Enumeration {
   case class KnownPosTagValue(key: Int, asString: String)
 
   def fromString(str: String): KnownPosTags = {
-    // TODO - napisć to jakoś sensownie
     if(str.equals("PRP")) PRP
     else if(str.equals("JJ")) JJ
     else if(str.equals("JJR")) JJR

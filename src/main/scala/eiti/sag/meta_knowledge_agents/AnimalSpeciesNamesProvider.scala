@@ -1,6 +1,8 @@
 package eiti.sag.meta_knowledge_agents
 
 import akka.actor.Actor
+import eiti.sag.knowledge_agents.KnowledgeAgent.LearnAbout
+import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.FindAnimalSpeciesToLearn
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Element, Node, TextNode}
@@ -8,7 +10,7 @@ import org.jsoup.select.NodeVisitor
 
 class AnimalSpeciesNamesProvider extends Actor {
 
-  var animalList: List[Any] = List()
+  var animalList: List[String] = List()
 
   def doFetchAnimalNames(): Unit = {
 
@@ -39,6 +41,16 @@ class AnimalSpeciesNamesProvider extends Actor {
   }
 
   override def receive: Receive = {
+    case msg: FindAnimalSpeciesToLearn =>
+      if(animalList.isEmpty) self ! msg
+      else {
+        val animals = animalList.filter(a => msg.animalsLearnedAbout.contains(a) == false)
+        if(animals.isEmpty) {
+          println("Need to crawl more species names")
+        } else {
+          msg.sendTo ! LearnAbout(animals.head)
+        }
+      }
     case "fetch" =>
       doFetchAnimalNames()
     case _ => println("Dont understand message")
