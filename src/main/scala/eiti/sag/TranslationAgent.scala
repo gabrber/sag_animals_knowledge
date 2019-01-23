@@ -93,8 +93,8 @@ class TranslationAgent extends Actor {
     val whitespaceTokenizerLine: Array[String] = WhitespaceTokenizer.INSTANCE.tokenize(question)
     var foundWord = new ArrayList[(String,String)]
     whitespaceTokenizerLine(0) match {
-      case "what" | "which" =>
-        if (whitespaceTokenizerLine.length > 1) {
+      case ("what" | "which") =>
+        if ( whitespaceTokenizerLine.length > 1){
           whitespaceTokenizerLine(1) match {
             case "is" | "are" =>
               println("looking for noun")
@@ -113,10 +113,15 @@ class TranslationAgent extends Actor {
                 }
               }
           }
+        } else {
+          println("Can you be more specific?")
+          self ! mainMenu()
         }
-        else {println("I cannot understand question")}
-
-      case _ => println("I don't know what to do :(")
+      case word =>
+        for (word <- tag.sentence.filter(!stopwords.contains(_))) foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
+      case _ =>
+        println("Can you be more specific?")
+        self ! mainMenu()
     }
     for(i <- foundWord.asScala.toList) println(i)
     return foundWord.asScala.toList
