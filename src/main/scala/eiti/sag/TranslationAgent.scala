@@ -102,7 +102,7 @@ class TranslationAgent extends Actor {
               for (word <- tag.sentence.filter(!stopwords.contains(_)))
                 word.posRaw match {
                   case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
-                  case _ =>
+                  case _ => for (word <- tag.sentence.filter(!stopwords.contains(_))) foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
                 }
             case "do" | "does" | "did" =>
               log.info("looking for verb")
@@ -110,9 +110,10 @@ class TranslationAgent extends Actor {
                 log.info(word.toString)
                 word.posRaw match {
                   case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[\\?\\!,.]",""), word.posRaw))
-                  case _ =>
+                  case _ => for (word <- tag.sentence.filter(!stopwords.contains(_))) foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
                 }
               }
+            case _ => for (word <- tag.sentence.filter(!stopwords.contains(_))) foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
           }
         } else {
           println("Can you be more specific?")
