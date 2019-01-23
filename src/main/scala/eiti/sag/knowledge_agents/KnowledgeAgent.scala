@@ -302,7 +302,7 @@ abstract class KnowledgeAgent extends Actor {
 
   }
 
-  def findSentence(mainLemma :Array[String], animal : String, lemma_dir :String, sent_dir :String) :Array[String] = {
+  def findSentence(mainLemma :Array[String], animal : String, lemma_dir :String, sent_dir :String, question: UsersQueryInstance) :Array[String] = {
     var sentences = new util.ArrayList[String]
 
     val readLemma = Source.fromFile("animal_db/" + lemma_dir + "/" + animal + ".txt")
@@ -314,6 +314,9 @@ abstract class KnowledgeAgent extends Actor {
     }
     readLemma.close
     for(i <- sentences.asScala.toArray) println(i)
+    val size = sentences.size()
+
+    sendAnswer(question,sentences.asScala.toList.toString,size.toFloat)
     return sentences.asScala.toArray
   }
 
@@ -346,11 +349,15 @@ abstract class KnowledgeAgent extends Actor {
     }
   }
 
-  def chooseTableData(animal:String,dirname:String): Unit ={
-    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
-    val content = Source.fromFile("animal_db/" + dirname + "/" + animal + ".txt").mkString
+  def chooseTableData(question: UsersQueryInstance,dirname:String): Unit ={
+    val file = new File("animal_db/" + dirname + "/" + question.animal + ".txt")
+    val content = Source.fromFile("animal_db/" + dirname + "/" + question.animal + ".txt").mkString
     val answer = content.replaceAll(";"," - ").split("\n").filter(line => !line.isEmpty)
-    for (line <- answer) println(line)
+    val size = answer.size
+/*    println(question)
+    println(answer)
+    println(size.toFloat)*/
+    sendAnswer(question,answer.toList.toString(),size.toFloat)
   }
 
   def persistAnimalsLearnedAbout(animalsLearnedAbout: List[String], fileName: String) = {
@@ -388,8 +395,9 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   def sendAnswer(query: UsersQueryInstance, answer: String, percentSure: Float): Unit = {
-    val call = context.actorSelection("../AnswerAgent*").resolveOne(5 seconds)
-    var agent = Await.result(call,5 second)
+    println("Sending Answer")
+    val call = context.actorSelection("../AnswerAgent*").resolveOne(15 seconds)
+    var agent = Await.result(call,15 second)
     agent ! FoundAnswer(query, answer, percentSure)
   }
 }

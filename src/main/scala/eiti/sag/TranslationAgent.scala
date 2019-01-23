@@ -147,7 +147,7 @@ class TranslationAgent extends Actor {
   // Choose one Agent with name matching pattern
   def choseOneAgent(patternName:String): ActorRef = {
     var test = context.actorSelection("akka://AnimalsKnowledgeBase/user/" + patternName + "*").resolveOne(5 second)
-    var agent = Await.result(test,5 second)
+    var agent = Await.result(test,15 second)
     return agent
   }
 

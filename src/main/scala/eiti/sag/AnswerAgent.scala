@@ -5,7 +5,7 @@ import akka.event.Logging
 import eiti.sag.AnswerAgent.{AwaitForAnswer, ForceAnswerNow, FoundAnswer}
 import eiti.sag.query.UsersQueryInstance
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -26,9 +26,10 @@ class AnswerAgent extends Actor {
       println("Sorry, cant answer")
     } else {
       val answer = answers.sortBy(_.percentSure).last.answer
-      println("Found answer: " + answer)
-      val call = context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent").resolveOne()
-      var agent = Await.result(call,5 second)
+      println("***** Found answer: *****")
+      for (word <- answer.toString.split("\n")) println(word)
+      val call = context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent*").resolveOne(15 seconds)
+      var agent = Await.result(call,15 second)
       agent ! "mainMenu"
     }
   }
@@ -44,8 +45,9 @@ class AnswerAgent extends Actor {
       findBestAndSend(q, queryToFoundAnswerList(q.originalQuery))
     case AwaitForAnswer(q) =>
       implicit val executionContext = context.system.dispatcher
-      context.system.scheduler.scheduleOnce(7 second, self, ForceAnswerNow(q))
+      context.system.scheduler.scheduleOnce  (7 second, self, ForceAnswerNow(q))
     case f: FoundAnswer =>
+      println("GOT ANSWER")
       val newAnswers = if(queryToFoundAnswerList.contains(f.query.originalQuery)) {
         f :: queryToFoundAnswerList(f.query.originalQuery)
       } else {
@@ -58,7 +60,9 @@ class AnswerAgent extends Actor {
 
   override def postStop(): Unit = {
     println("I was dead. Ask me again.")
-
+    val call = context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent*").resolveOne((5 seconds))
+    var agent = Await.result(call,15 second)
+    agent ! "mainMenu"
     super.postStop()
   }
 

@@ -63,12 +63,16 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         learn(usersQueryInstance.animal)
       }
 
-      if (usersQueryInstance.parsedType == QueryType.General) try {chooseTableData(usersQueryInstance.animal,tablesFile)}
-      catch { case _ => log.info("cannot read table file") }
+      usersQueryInstance.parsedType match {
+        case QueryType.General =>
+          try {chooseTableData(usersQueryInstance,tablesFile)}
+          catch { case _ => log.info("cannot read table file") }
+        case QueryType.Location => searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
+        case _ =>
+          try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile,usersQueryInstance)}
+          catch { case _ => println("Cannot find sentence")}
+      }
 
-      searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
-      try { val full_sent = findSentence(usersQueryInstance.mainWords, usersQueryInstance.animal, lemmaSentencesFile, sentencesFile)
-      } catch { case _ => println("Cannot find sentence")}
       println("WWF is done")
       context.setReceiveTimeout(1 minute)
     case ReceiveTimeout ⇒
