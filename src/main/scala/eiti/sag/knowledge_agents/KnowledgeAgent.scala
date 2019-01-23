@@ -28,6 +28,8 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.language.postfixOps
 import scalaj.http._
+
+import scala.concurrent.Await
 //https://github.com/ruippeixotog/scala-scraper
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 
@@ -386,7 +388,9 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   def sendAnswer(query: UsersQueryInstance, answer: String, percentSure: Float): Unit = {
-    context.actorSelection("../AnswerAgent") ! FoundAnswer(query, answer, percentSure)
+    val call = context.actorSelection("../AnswerAgent*").resolveOne(5 seconds)
+    var agent = Await.result(call,5 second)
+    agent ! FoundAnswer(query, answer, percentSure)
   }
 }
 

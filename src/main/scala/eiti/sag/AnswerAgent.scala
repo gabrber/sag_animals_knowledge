@@ -5,6 +5,7 @@ import akka.event.Logging
 import eiti.sag.AnswerAgent.{AwaitForAnswer, ForceAnswerNow, FoundAnswer}
 import eiti.sag.query.UsersQueryInstance
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -26,7 +27,9 @@ class AnswerAgent extends Actor {
     } else {
       val answer = answers.sortBy(_.percentSure).head.answer
       println("Found answer: " + answer)
-      context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent1") ! "mainMenu"
+      val call = context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent").resolveOne()
+      var agent = Await.result(call,5 second)
+      agent ! "mainMenu"
     }
   }
 
@@ -52,6 +55,13 @@ class AnswerAgent extends Actor {
       sendAnswerIfPossible(f.query)
     case _      ⇒ log.info("received unknown message")
   }
+
+  override def postStop(): Unit = {
+    println("I was dead. Ask me again.")
+
+    super.postStop()
+  }
+
 }
 
 object AnswerAgent {
