@@ -19,6 +19,8 @@ class AnimalSpeciesNamesProvider extends Actor {
     val doc = Jsoup.parse(html.toString)
 
     doc.traverse(new MyNodeVisitor())
+
+    animalList = animalList ++ animalList.flatten(s => s.split(" ").toList).filter(s => s.isEmpty == false)
   }
 
   class MyNodeVisitor extends NodeVisitor {

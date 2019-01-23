@@ -13,25 +13,32 @@ class AnswerAgent extends Actor {
   val KnowledgeAgentsNo = 3
 
   var queryToFoundAnswerList: scala.collection.mutable.Map[String, List[FoundAnswer]] = scala.collection.mutable.Map()
+  var alreadyAnswered: List[UsersQueryInstance] = List()
 
-  def findBestAndSend(maybeAnswers: List[FoundAnswer]) = {
-    if(maybeAnswers.isEmpty) {
+  def findBestAndSend(query: UsersQueryInstance, answers: List[FoundAnswer]): Unit = {
+    if(alreadyAnswered.contains(query)) {
+      return
+    } else {
+      alreadyAnswered = query :: alreadyAnswered
+    }
+    if(answers.isEmpty) {
       println("Sorry, cant answer")
     } else {
-      val answer = maybeAnswers.sortBy(_.percentSure).head.answer
+      val answer = answers.sortBy(_.percentSure).head.answer
       println("Found answer: " + answer)
+      context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent1") ! "mainMenu"
     }
   }
 
   def sendAnswerIfPossible(query: UsersQueryInstance): Unit = {
     if(queryToFoundAnswerList(query.originalQuery).size == KnowledgeAgentsNo) {
-      findBestAndSend(queryToFoundAnswerList(query.originalQuery))
+      findBestAndSend(query, queryToFoundAnswerList(query.originalQuery))
     }
   }
 
   def receive = {
     case ForceAnswerNow(q) =>
-      findBestAndSend(queryToFoundAnswerList(q.originalQuery))
+      findBestAndSend(q, queryToFoundAnswerList(q.originalQuery))
     case AwaitForAnswer(q) =>
       implicit val executionContext = context.system.dispatcher
       context.system.scheduler.scheduleOnce(7 second, self, ForceAnswerNow(q))
