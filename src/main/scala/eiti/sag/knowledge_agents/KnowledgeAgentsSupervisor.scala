@@ -50,13 +50,9 @@ class KnowledgeAgentsSupervisor extends Actor {
 
   def startLearning(animals: List[String]): Unit = {
 
-    val KnowledgeAgentAFS = context.system.actorOf(Props[KnowledgeAgentAFS], name = "KnowledgeAgentAFS")
-    val KnowledgeAgentWikipedia = context.system.actorOf(Props[KnowledgeAgentWikipedia], name = "KnowledgeAgentWikipedia")
-    val KnowledgeAgentWWF = context.system.actorOf(Props[KnowledgeAgentWWF], name = "KnowledgeAgentWWF")
-
-    knowledgeAgentMap = KnowledgeAgentAFS :: knowledgeAgentMap
-    knowledgeAgentMap = KnowledgeAgentWikipedia :: knowledgeAgentMap
-    knowledgeAgentMap = KnowledgeAgentWWF :: knowledgeAgentMap
+    val KnowledgeAgentAFS = context.system. actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentAFS")
+    val KnowledgeAgentWikipedia = context.system.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentWikipedia")
+    val KnowledgeAgentWWF = context.system.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentWWF")
 
     for (elem <- animals) {
       KnowledgeAgentAFS ! LearnAbout(elem)

@@ -48,14 +48,20 @@ class TranslationAgent extends Actor {
 
   // Get animal name from user
   def askExplore(): String = {
-    println("Which animal are you interested in?")
-    var animal = scala.io.StdIn.readLine()
+    var animal = ""
+    while (animal.isEmpty){
+      println("Which animal are you interested in?")
+      animal = scala.io.StdIn.readLine()
+    }
     return animal
   }
 
   def getQuestion(animal:String): String = {
-    println("What do you want to know about " + animal + "?")
-    var infoType = scala.io.StdIn.readLine()
+    var infoType = ""
+    while (infoType.isEmpty){
+      println("What do you want to know about " + animal + "?")
+      infoType = scala.io.StdIn.readLine()
+    }
     println("Okay. Looking for " + infoType)
     return infoType
   }
@@ -84,18 +90,17 @@ class TranslationAgent extends Actor {
     val whitespaceTokenizerLine: Array[String] = WhitespaceTokenizer.INSTANCE.tokenize(question)
     var foundWord = new ArrayList[(String,String)]
     whitespaceTokenizerLine(0) match {
-      case "what" => {
+      case "what" | "which" =>
         if (whitespaceTokenizerLine.length > 1) {
           whitespaceTokenizerLine(1) match {
-            case "is" | "are" => {
+            case "is" | "are" =>
               println("looking for noun")
-              for (word <- tag.sentence){
+              for (word <- tag.sentence)
                 word.posRaw match {
                   case "NN" | "NNS" | "NNP" | "NNSP" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""),word.posRaw))
                   case _ =>
                 }
-              }}
-            case "do" | "does" | "did" => {
+            case "do" | "does" | "did" =>
               println("looking for verb")
               for (word <- tag.sentence){
                 word.posRaw match {
@@ -103,20 +108,10 @@ class TranslationAgent extends Actor {
                   case _ =>
                 }
               }
-            }
           }
         }
         else {println("I cannot understand question")}
-      }
-      case "where" => {
-        println("looking for verb")
-        for (word <- tag.sentence){
-          word.posRaw match {
-            case "VB" | "VBD" | "VBG" | "VBN" | "VBP" | "VBZ" => foundWord.add((word.word.replaceAll("[ \\?\\!,.]",""), word.posRaw))
-            case _ =>
-          }
-        }
-      }
+
       case _ => println("I don't know what to do :(")
     }
     return foundWord.asScala.toList
