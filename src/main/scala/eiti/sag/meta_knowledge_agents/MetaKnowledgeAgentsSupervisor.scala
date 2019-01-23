@@ -9,17 +9,17 @@ class MetaKnowledgeAgentsSupervisor extends Actor {
   var animalSpeciesNamesProvider: ActorRef = null
 
   override def receive: Receive = {
-    case "start" =>
-      startAgents()
     case AskForAnimalSpecies(animalsLearnedAbout) =>
       val replyTo = sender()
+      if(animalSpeciesNamesProvider == null) {
+        startAgents()
+      }
       animalSpeciesNamesProvider ! FindAnimalSpeciesToLearn(replyTo, animalsLearnedAbout)
     case _ => println("MetaKnowledgeAgentsSupervisor - unknown message received")
   }
 
 
   def startAgents(): Unit = {
-    val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
     animalSpeciesNamesProvider = context.actorOf(Props[AnimalSpeciesNamesProvider])
     animalSpeciesNamesProvider ! "fetch"
   }
