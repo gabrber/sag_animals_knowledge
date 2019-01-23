@@ -48,9 +48,22 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
     case Kaboom => kaboom()
     case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animalsFile)
     case LearnAbout(animal: String) =>
-      learn(animal)
+      try {
+        learn(animal)
+
+        println("AFS learning about " + animal)
+        val animalUrl = if (animal.toLowerCase == "dog")
+          baseUrl + "All-About-Dogs.html"
+        else baseUrl + animal.capitalize + "-facts.html"
+
+      } catch {
+        case t: Throwable =>
+          animalsLearnedAbout = animal :: animalsLearnedAbout
+          persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
+          throw t
+      }
       animalsLearnedAbout = animal :: animalsLearnedAbout
-      context.setReceiveTimeout(1 minute)
+      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
       askForAnimalToLearnAbout()
 
     case usersQueryInstance: UsersQueryInstance =>

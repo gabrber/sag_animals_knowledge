@@ -7,6 +7,7 @@ import java.util
 import akka.actor.Actor
 import akka.event.Logging
 import akka.util.Timeout
+import eiti.sag.AnswerAgent.FoundAnswer
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
 import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.AskForAnimalSpecies
 import eiti.sag.query.{QueryType, UsersQueryInstance}
@@ -147,7 +148,7 @@ abstract class KnowledgeAgent extends Actor {
     if(usersQueryInstance.parsedType.equals(QueryType.Location)) {
       findLocationUsingNERTags(usersQueryInstance, dirname)
     } else {
-      println("Sorry, cant answer")
+      sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)
     }
   }
 
@@ -164,20 +165,25 @@ abstract class KnowledgeAgent extends Actor {
 
     val animal = extractAnimal(usersQueryInstance.originalQuery)
     if(animal == null) {
-      println("Query: " + usersQueryInstance + ". Didnot find answer :(")
+      sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)
       return
     }
 
-    // FIXME mocked :(
     val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
     val content = Source.fromFile("animal_db/" + dirname + "/" + animal + ".txt").mkString
-    val mostCertainLocation = content.split("\n").filter(line => !line.isEmpty).map(line => {
+    val locations = content.split("\n").filter(line => !line.isEmpty).map(line => {
       val word = line.split(knowledgeBaseSep)(0)
       val certainty = line.split(knowledgeBaseSep)(1).toDouble
       (word, certainty)
-    }).maxBy(_._2)._1
+    })
 
-    println("Query: " + usersQueryInstance.originalQuery + ". Found answer: " + mostCertainLocation)
+    if(locations.isEmpty) {
+      sendAnswer(usersQueryInstance, "Sorry, cant answer", 1)
+    } else {
+      val mostCertainLocation = locations.maxBy(_._2)._1
+      sendAnswer(usersQueryInstance, mostCertainLocation, 1)
+    }
+
   }
 
   @throws[IOException]
@@ -370,6 +376,10 @@ abstract class KnowledgeAgent extends Actor {
 
   def askForAnimalToLearnAbout() = {
     context.actorSelection("../MetaKnowledgeAgentsSupervisor") ! AskForAnimalSpecies(animalsLearnedAbout)
+  }
+
+  def sendAnswer(query: UsersQueryInstance, answer: String, percentSure: Float): Unit = {
+    context.actorSelection("../AnswerAgent") ! FoundAnswer(query, answer, percentSure)
   }
 }
 
