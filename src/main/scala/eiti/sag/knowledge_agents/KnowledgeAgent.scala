@@ -83,7 +83,7 @@ abstract class KnowledgeAgent extends Actor {
   def checkUrlExists(checkUrl: String): Boolean = {
     val response = Http(checkUrl).asString.code
     var ifExists = false
-    if (response != 404) { ifExists = true}
+    if (response < 400 ) { ifExists = true}
     ifExists
   }
 
