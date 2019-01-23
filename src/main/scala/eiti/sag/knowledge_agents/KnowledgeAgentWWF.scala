@@ -13,14 +13,14 @@ import org.jsoup.Jsoup
 
 class KnowledgeAgentWWF extends KnowledgeAgent {
 
-  val learned_animals = "wwf/learned_animals"
-  val bag_of_words = "wwf/bag_of_words"
-  val ner = "wwf/ner"
-  val pos_ngrams = "wwf/pos_ngrams"
-  val sentences = "wwf/sentences"
-  val lemmaSentences = "wwf/lemma_sentences"
-  val chunker = "wwf/chunker"
-  val tables = "wwf/tables"
+  val learned_animalsFile = "wwf/learned_animals"
+  val bag_of_wordsFile = "wwf/bag_of_words"
+  val nerFile = "wwf/ner"
+  val pos_ngramsFile = "wwf/pos_ngrams"
+  val sentencesFile = "wwf/sentences"
+  val lemmaSentencesFile = "wwf/lemma_sentences"
+  val chunkerFile = "wwf/chunker"
+  val tablesFile = "wwf/tables"
   val baseUrl = "https://www.worldwildlife.org/species/"
 
   def learn(animal : String): Unit ={
@@ -28,17 +28,17 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
     val animalUrl = baseUrl + animal
     if (checkUrlExists(animalUrl)) {
       getTables(animalUrl, animal)
-      learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
+      learnAbout(animalUrl, animal, bag_of_wordsFile, nerFile, pos_ngramsFile, sentencesFile, lemmaSentencesFile, chunkerFile)
 
       animalsLearnedAbout = animal :: animalsLearnedAbout
-      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
       println("WWF finished learning " + animal)
     } else { log.info("Cannot find info about " + animal)}
   }
 
   override def receive = {
     case Kaboom => kaboom()
-    case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
+    case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animalsFile)
 
     case LearnAbout(animal: String) =>
       learn(animal)
@@ -51,8 +51,8 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
         learn(usersQueryInstance.animal)
       }
 
-      searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
-      try { val full_sent = findSentence(usersQueryInstance.mainWords, usersQueryInstance.animal, lemmaSentences, sentences)
+      searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
+      try { val full_sent = findSentence(usersQueryInstance.mainWords, usersQueryInstance.animal, lemmaSentencesFile, sentencesFile)
       } catch { case _ => println("Cannot find sentence")}
       println("WWF is done")
       context.setReceiveTimeout(1 minute)
@@ -63,7 +63,7 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
   }
 
   def getTables(pageTitle: String, animal:String): Unit = {
-    val file = new File("animal_db/" + tables + "/" + animal + ".txt")
+    val file = new File("animal_db/" + tablesFile + "/" + animal + ".txt")
     val bw = new BufferedWriter(new FileWriter(file))
     val url = pageTitle
     val html = JsoupBrowser().get(url)

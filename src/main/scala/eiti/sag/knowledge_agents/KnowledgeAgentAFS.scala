@@ -16,14 +16,14 @@ import scala.concurrent.duration._
 
 class KnowledgeAgentAFS extends KnowledgeAgent {
 
-  val learned_animals = "animal_facts_encyclopedia/learned_animals"
-  val bag_of_words = "animal_facts_encyclopedia/bag_of_words"
-  val ner = "animal_facts_encyclopedia/ner"
-  val pos_ngrams = "animal_facts_encyclopedia/pos_ngrams"
-  val sentences = "animal_facts_encyclopedia/sentences"
-  val lemmaSentences = "animal_facts_encyclopedia/lemma_sentences"
-  val chunker = "animal_facts_encyclopedia/chunker"
-  val tables = "animal_facts_encyclopedia/tables"
+  val learned_animalsFile = "animal_facts_encyclopedia/learned_animals"
+  val bag_of_wordsFile = "animal_facts_encyclopedia/bag_of_words"
+  val nerFile = "animal_facts_encyclopedia/ner"
+  val pos_ngramsFile = "animal_facts_encyclopedia/pos_ngrams"
+  val sentencesFile = "animal_facts_encyclopedia/sentences"
+  val lemmaSentencesFile = "animal_facts_encyclopedia/lemma_sentences"
+  val chunkerFile = "animal_facts_encyclopedia/chunker"
+  val tablesFile = "animal_facts_encyclopedia/tables"
   val baseUrl = "https://www.animalfactsencyclopedia.com/"
 
   def learn(animal :String): Unit = {
@@ -36,17 +36,17 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
     if (checkUrlExists(animalUrl)) {
 
       getTables(animalUrl, animal)
-      learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
+      learnAbout(animalUrl, animal, bag_of_wordsFile, nerFile, pos_ngramsFile, sentencesFile, lemmaSentencesFile, chunkerFile)
 
       animalsLearnedAbout = animal :: animalsLearnedAbout
-      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animalsFile)
       println("AFS finished learning about " + animal)
     } else { log.info("Cannot find info about " + animal)}
   }
 
   override def receive = {
     case Kaboom => kaboom()
-    case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
+    case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animalsFile)
     case LearnAbout(animal: String) =>
       learn(animal)
       animalsLearnedAbout = animal :: animalsLearnedAbout
@@ -59,8 +59,8 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
         learn(usersQueryInstance.animal)
       }
 
-      searchKnowledgeAndSendAnswer(usersQueryInstance, ner)
-      try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentences,sentences)
+      searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
+      try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile)
       } catch { case _ => println("Cannot find sentence")}
       println("AFS is done")
       context.setReceiveTimeout(1 minute)
@@ -72,7 +72,7 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
   }
 
   def getTables(pageTitle: String, animal:String): Unit = {
-    val file = new File("animal_db/" + tables + "/" + animal + ".txt")
+    val file = new File("animal_db/" + tablesFile + "/" + animal + ".txt")
     val bw = new BufferedWriter(new FileWriter(file))
     val url = pageTitle
     val html = JsoupBrowser().get(url)

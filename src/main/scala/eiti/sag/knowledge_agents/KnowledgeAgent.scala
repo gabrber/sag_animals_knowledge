@@ -52,14 +52,28 @@ abstract class KnowledgeAgent extends Actor {
 
   context.setReceiveTimeout(2 minutes)
 
+  val lemmaModel = new DictionaryLemmatizer(new BufferedInputStream(new FileInputStream(lemmaModelFile)))
+  val nameFinder = new NameFinderME(new TokenNameFinderModel(new BufferedInputStream(new FileInputStream(locationModelFile))))
+  val tokenizer = new TokenizerME(new TokenizerModel(new BufferedInputStream(new FileInputStream(tokenModelFile))))
+  val posTagger = new POSTaggerME(new POSModel(new BufferedInputStream(new FileInputStream(posModelFile))))
+  val sentences = new SentenceDetectorME( new SentenceModel(new BufferedInputStream(new FileInputStream(sentModelFile))))
+  val chunker = new ChunkerME(new ChunkerModel(new BufferedInputStream(new FileInputStream(chunkerModelFile))))
+
   def learnAbout(animalUrl :String, animal :String, bag_of_words: String, ner :String, pos_ngrams: String, sentences: String, lemmaSentences : String, chunker : String)={
 
     val pageContent = fetchContent(animalUrl)
+    println(pageContent)
+    println("persistAsBagOfWords()")
     persistAsBagOfWords(pageContent, animal, bag_of_words)
+    println("persistAsNERTokens()")
     persistAsNERTokens(pageContent, animal, ner)
+    println("persistAsPosNgrams()")
     persistAsPosNgrams(pageContent, animal, pos_ngrams)
+    println("persistAsSentences()")
     persistAsSentences(pageContent, animal, sentences)
+    println("persistAsLemmaSentences()")
     persistAsLemmaSentences(sentences, animal, lemmaSentences)
+    println("persistAsChunker()")
     persistAsChunker(pageContent, animal, chunker)
   }
 
@@ -98,9 +112,9 @@ abstract class KnowledgeAgent extends Actor {
 
     println("Loading model ...")
 
-    val bis = new BufferedInputStream(new FileInputStream(locationModelFile))
-    val model = new TokenNameFinderModel(bis)
-    val nameFinder = new NameFinderME(model)
+//    val bis = new BufferedInputStream(new FileInputStream(locationModelFile))
+//    val model = new TokenNameFinderModel(bis)
+//    val nameFinder = new NameFinderME(model)
 
     println("Model loaded. Tokenizing ...")
     val tokens = tokenize(pageContent)
@@ -166,9 +180,9 @@ abstract class KnowledgeAgent extends Actor {
 
   @throws[IOException]
   def tokenize(sentence: String): Array[String] = {
-    val bis = new BufferedInputStream(new FileInputStream(tokenModelFile))
-    val tokenModel = new TokenizerModel(bis)
-    val tokenizer = new TokenizerME(tokenModel)
+//    val bis = new BufferedInputStream(new FileInputStream(tokenModelFile))
+//    val tokenModel = new TokenizerModel(bis)
+//    val tokenizer = new TokenizerME(tokenModel)
     tokenizer.tokenize(sentence)
   }
 
@@ -180,10 +194,11 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   def persistAsPOS(pageContent: String) = {
-    val pos = new BufferedInputStream(new FileInputStream(posModelFile))
-    val posModel = new POSModel(pos)
-    val posTagger = new POSTaggerME(posModel)
+//    val pos = new BufferedInputStream(new FileInputStream(posModelFile))
+//    val posModel = new POSModel(pos)
+//    val posTagger = new POSTaggerME(posModel)
     val tokens = WhitespaceTokenizer.INSTANCE.tokenize(pageContent)
+    println("tokens done")
     val tags = posTagger.tag(tokens)
     val posSentence = new POSSample(tokens, tags)
     posSentence
@@ -207,9 +222,9 @@ abstract class KnowledgeAgent extends Actor {
 
   def persistAsSentences(pageContent :String,animal :String,dirname :String) = {
 
-    val sent = new BufferedInputStream(new FileInputStream(sentModelFile))
-    val sentModel = new SentenceModel(sent)
-    val sentences = new SentenceDetectorME(sentModel)
+//    val sent = new BufferedInputStream(new FileInputStream(sentModelFile))
+//    val sentModel = new SentenceModel(sent)
+//    val sentences = new SentenceDetectorME(sentModel)
     val readSentece = sentences.sentDetect(pageContent)
 
     val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
@@ -237,17 +252,17 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   def getPos(pageContent: String) = {
-    val pos = new BufferedInputStream(new FileInputStream(posModelFile))
-    val posModel = new POSModel(pos)
-    val posTagger = new POSTaggerME(posModel)
+//    val pos = new BufferedInputStream(new FileInputStream(posModelFile))
+//    val posModel = new POSModel(pos)
+//    val posTagger = new POSTaggerME(posModel)
     val tokens = tokenize(pageContent)
     val tags = posTagger.tag(tokens)
     (tokens,tags)
   }
 
   def getLemma(pageContent:String):Array[String] = {
-    val bis = new BufferedInputStream(new FileInputStream(lemmaModelFile))
-    val lemmaModel = new DictionaryLemmatizer(bis)
+//    val bis = new BufferedInputStream(new FileInputStream(lemmaModelFile))
+//    val lemmaModel = new DictionaryLemmatizer(bis)
     val readPOS = getPos(pageContent)
     val tokens = readPOS._1
     val postags = readPOS._2
@@ -259,9 +274,9 @@ abstract class KnowledgeAgent extends Actor {
   }
 
   def persistAsChunker(pageContent:String,animal :String,dirname :String) = {
-    val bis  = new BufferedInputStream(new FileInputStream(chunkerModelFile))
-    val chunkerModel = new ChunkerModel(bis)
-    val chunker = new ChunkerME(chunkerModel)
+//    val bis  = new BufferedInputStream(new FileInputStream(chunkerModelFile))
+//    val chunkerModel = new ChunkerModel(bis)
+//    val chunker = new ChunkerME(chunkerModel)
     val readPOS = getPos(pageContent)
     val posSentence = readPOS._1
     val posTags = readPOS._2
