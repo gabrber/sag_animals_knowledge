@@ -23,6 +23,7 @@ class KnowledgeAgentsSupervisor extends Actor {
 
   override def receive: Receive = {
     case StartLearning() => startLearning()
+    case LearnAbout(animal) => knowledgeAgentMap.foreach((a) => a ! LearnAbout(animal))
     case q: UsersQueryInstance => askAQuestion(q)
     case InitAgents() => initAgents()
     case Kaboom => killSomeAgentAtRandom()
