@@ -344,6 +344,13 @@ abstract class KnowledgeAgent extends Actor {
     }
   }
 
+  def chooseTableData(animal:String,dirname:String): Unit ={
+    val file = new File("animal_db/" + dirname + "/" + animal + ".txt")
+    val content = Source.fromFile("animal_db/" + dirname + "/" + animal + ".txt").mkString
+    val answer = content.replaceAll(";"," - ").split("\n").filter(line => !line.isEmpty)
+    for (line <- answer) println(line)
+  }
+
   def persistAnimalsLearnedAbout(animalsLearnedAbout: List[String], fileName: String) = {
     val file = new File("animal_db/" + fileName)
     val bw = new BufferedWriter(new FileWriter(file))

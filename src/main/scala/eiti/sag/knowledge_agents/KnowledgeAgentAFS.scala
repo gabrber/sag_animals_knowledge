@@ -8,6 +8,7 @@ import eiti.sag.query.{QueryType, UsersQueryInstance}
 import akka.actor.ReceiveTimeout
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import org.jsoup.Jsoup
+
 import scala.concurrent.Await
 import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.AskForAnimalSpecies
 
@@ -71,6 +72,9 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
         println("AFS - I don't know anything about this animal. Let me learn.")
         learn(usersQueryInstance.animal)
       }
+
+      if (usersQueryInstance.parsedType == QueryType.General) try {chooseTableData(usersQueryInstance.animal,tablesFile)}
+      catch { case _ => log.info("cannot read table file") }
 
       searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
       try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile)

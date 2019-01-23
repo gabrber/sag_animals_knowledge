@@ -115,13 +115,13 @@ class TranslationAgent extends Actor {
           }
         } else {
           println("Can you be more specific?")
-          self ! mainMenu()
+          self ! askAboutAnimals()
         }
       case word =>
         for (word <- tag.sentence.filter(!stopwords.contains(_))) foundWord.add((word.word.replaceAll("[\\?\\!,.]",""),word.posRaw))
       case _ =>
         println("Can you be more specific?")
-        self ! mainMenu()
+        self ! askAboutAnimals()
     }
     for(i <- foundWord.asScala.toList) println(i)
     return foundWord.asScala.toList

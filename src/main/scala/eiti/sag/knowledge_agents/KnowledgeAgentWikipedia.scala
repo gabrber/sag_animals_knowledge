@@ -18,6 +18,7 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
   val sentencesFile = "wikipedia/sentences"
   val lemmaSentencesFile = "wikipedia/lemma_sentences"
   val chunkerFile = "wikipedia/chunker"
+  val tablesFile = "wikipedia/tables"
   val baseUrl = "https://en.wikipedia.org/wiki/"
 
   def learn(animal :String): Unit = {
@@ -54,6 +55,9 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
         println("Wikipedia - I don't know anything about this animal. Let me learn.")
         learn(usersQueryInstance.animal)
       }
+
+      if (usersQueryInstance.parsedType == QueryType.General) try {chooseTableData(usersQueryInstance.animal,tablesFile)}
+      catch { case _ => log.info("cannot read table file") }
 
       searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
       try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile)
