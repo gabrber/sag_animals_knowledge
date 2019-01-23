@@ -53,16 +53,13 @@ abstract class KnowledgeAgent extends Actor {
 
   def learnAbout(animalUrl :String, animal :String, bag_of_words: String, ner :String, pos_ngrams: String, sentences: String, lemmaSentences : String, chunker : String)={
 
-    println(animalUrl)
-    if (checkUrlExists(animalUrl)) {
-      val pageContent = fetchContent(animalUrl)
-      persistAsBagOfWords(pageContent, animal, bag_of_words)
-      persistAsNERTokens(pageContent, animal, ner)
-      persistAsPosNgrams(pageContent, animal, pos_ngrams)
-      persistAsSentences(pageContent, animal, sentences)
-      persistAsLemmaSentences(sentences, animal, lemmaSentences)
-      persistAsChunker(pageContent, animal, chunker)
-    } else { log.info("Cannot find info about " + animal)}
+    val pageContent = fetchContent(animalUrl)
+    persistAsBagOfWords(pageContent, animal, bag_of_words)
+    persistAsNERTokens(pageContent, animal, ner)
+    persistAsPosNgrams(pageContent, animal, pos_ngrams)
+    persistAsSentences(pageContent, animal, sentences)
+    persistAsLemmaSentences(sentences, animal, lemmaSentences)
+    persistAsChunker(pageContent, animal, chunker)
   }
 
   def checkUrlExists(checkUrl: String): Boolean = {

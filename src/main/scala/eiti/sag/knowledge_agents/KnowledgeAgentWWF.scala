@@ -27,13 +27,14 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
   def learn(animal : String): Unit ={
     println("WWF learning about " + animal)
     val animalUrl = baseUrl + animal
+    if (checkUrlExists(animalUrl)) {
+      getTables(animalUrl, animal)
+      learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
 
-    getTables(animalUrl,animal)
-    learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
-
-    animalsLearnedAbout = animal :: animalsLearnedAbout
-    persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
-    println("WWF finished learning " + animal)
+      animalsLearnedAbout = animal :: animalsLearnedAbout
+      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+      println("WWF finished learning " + animal)
+    } else { log.info("Cannot find info about " + animal)}
   }
 
   override def receive = {

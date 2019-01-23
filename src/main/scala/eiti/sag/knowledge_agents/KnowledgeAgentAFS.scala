@@ -29,12 +29,16 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
     if (animal.toLowerCase == "dog"){animalUrl = baseUrl + "All-About-Dogs.html"}
     else {animalUrl = baseUrl + animal.capitalize + "-facts.html"}
 
-    getTables(animalUrl,animal)
-    learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
+    println(animalUrl)
+    if (checkUrlExists(animalUrl)) {
 
-    animalsLearnedAbout = animal :: animalsLearnedAbout
-    persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
-    println("AFS finished learning about " + animal)
+      getTables(animalUrl, animal)
+      learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
+
+      animalsLearnedAbout = animal :: animalsLearnedAbout
+      persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
+      println("AFS finished learning about " + animal)
+    } else { log.info("Cannot find info about " + animal)}
   }
 
   override def receive = {

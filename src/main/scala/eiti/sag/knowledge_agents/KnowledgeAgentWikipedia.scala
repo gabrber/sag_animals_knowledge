@@ -26,8 +26,9 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
   def learn(animal :String): Unit = {
     println("Wikipedia learning about " + animal)
     val animalUrl = baseUrl + URLEncoder.encode(animal.capitalize, "UTF-8")
-    learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
-
+    if (checkUrlExists(animalUrl)) {
+      learnAbout(animalUrl, animal, bag_of_words, ner, pos_ngrams, sentences, lemmaSentences, chunker)
+    }  else { log.info("Cannot find info about " + animal)}
     animalsLearnedAbout = animal :: animalsLearnedAbout
     persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
     println("Wikipedia finished learning about " + animal)
