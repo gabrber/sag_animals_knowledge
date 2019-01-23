@@ -66,11 +66,13 @@ class KnowledgeAgentWWF extends KnowledgeAgent {
       usersQueryInstance.parsedType match {
         case QueryType.General =>
           try {chooseTableData(usersQueryInstance,tablesFile)}
-          catch { case _ => log.info("cannot read table file") }
+          catch { case _ => log.info("cannot read table file")
+            sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)}
         case QueryType.Location => searchKnowledgeAndSendAnswer(usersQueryInstance, nerFile)
         case _ =>
           try{ val full_sent = findSentence(usersQueryInstance.mainWords,usersQueryInstance.animal,lemmaSentencesFile,sentencesFile,usersQueryInstance)}
-          catch { case _ => println("Cannot find sentence")}
+          catch { case _ => println("Cannot find sentence")
+            sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)}
       }
 
       println("WWF is done")

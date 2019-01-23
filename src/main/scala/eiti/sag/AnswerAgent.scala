@@ -45,7 +45,7 @@ class AnswerAgent extends Actor {
       findBestAndSend(q, queryToFoundAnswerList(q.originalQuery))
     case AwaitForAnswer(q) =>
       implicit val executionContext = context.system.dispatcher
-      context.system.scheduler.scheduleOnce  (7 second, self, ForceAnswerNow(q))
+      context.system.scheduler.scheduleOnce(15 second, self, ForceAnswerNow(q))
     case f: FoundAnswer =>
       println("GOT ANSWER")
       val newAnswers = if(queryToFoundAnswerList.contains(f.query.originalQuery)) {

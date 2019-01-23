@@ -315,7 +315,7 @@ abstract class KnowledgeAgent extends Actor {
     readLemma.close
     for(i <- sentences.asScala.toArray) println(i)
     val size = sentences.size()
-
+    //println(sentences.size())
     sendAnswer(question,sentences.asScala.toList.toString,size.toFloat)
     return sentences.asScala.toArray
   }
@@ -354,6 +354,7 @@ abstract class KnowledgeAgent extends Actor {
     val content = Source.fromFile("animal_db/" + dirname + "/" + question.animal + ".txt").mkString
     val answer = content.replaceAll(";"," - ").split("\n").filter(line => !line.isEmpty)
     val size = answer.size
+    println(size)
 /*    println(question)
     println(answer)
     println(size.toFloat)*/
