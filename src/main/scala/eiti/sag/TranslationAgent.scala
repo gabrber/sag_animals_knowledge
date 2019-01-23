@@ -15,6 +15,7 @@ import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.tokenize.WhitespaceTokenizer
 import java.util.ArrayList
 
+import eiti.sag.AnswerAgent.AwaitForAnswer
 import eiti.sag.knowledge_agents.KnowledgeAgent.LearnAbout
 import opennlp.tools.lemmatizer.DictionaryLemmatizer
 
@@ -177,8 +178,9 @@ class TranslationAgent extends Actor {
       log.info("Cannot resolve question type")
     }
 
-    context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! UsersQueryInstance(animal, questionType, tagged, mainWords, animal)
-
+    val q = UsersQueryInstance(animal, questionType, tagged, mainWords, animal)
+    context.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentsSupervisor") ! q
+    context.actorSelection("akka://AnimalsKnowledgeBase/user/AnswerAgent") ! AwaitForAnswer(q)
   }
 
   def getStopWords() = {

@@ -10,32 +10,38 @@ import scala.language.postfixOps
 
 class AnswerAgent extends Actor {
   val log = Logging(context.system, this)
+  val KnowledgeAgentsNo = 3
 
-  var queryToFoundAnswerList: scala.collection.mutable.Map[UsersQueryInstance, List[FoundAnswer]] = scala.collection.mutable.Map()
+  var queryToFoundAnswerList: scala.collection.mutable.Map[String, List[FoundAnswer]] = scala.collection.mutable.Map()
 
   def findBestAndSend(maybeAnswers: List[FoundAnswer]) = {
     if(maybeAnswers.isEmpty) {
       println("Sorry, cant answer")
     } else {
       val answer = maybeAnswers.sortBy(_.percentSure).head.answer
-      println(answer)
+      println("Found answer: " + answer)
     }
   }
 
   def sendAnswerIfPossible(query: UsersQueryInstance): Unit = {
-    if(queryToFoundAnswerList.get(query).size == 3) {
-      findBestAndSend(queryToFoundAnswerList.get(query).getOrElse(List()))
+    if(queryToFoundAnswerList(query.originalQuery).size == KnowledgeAgentsNo) {
+      findBestAndSend(queryToFoundAnswerList(query.originalQuery))
     }
   }
 
   def receive = {
     case ForceAnswerNow(q) =>
-      findBestAndSend(queryToFoundAnswerList(q))
+      findBestAndSend(queryToFoundAnswerList(q.originalQuery))
     case AwaitForAnswer(q) =>
       implicit val executionContext = context.system.dispatcher
-      context.system.scheduler.scheduleOnce(10 second, self, ForceAnswerNow(q))
+      context.system.scheduler.scheduleOnce(7 second, self, ForceAnswerNow(q))
     case f: FoundAnswer =>
-      queryToFoundAnswerList.put(f.query, f :: queryToFoundAnswerList.get(f.query).getOrElse(List()))
+      val newAnswers = if(queryToFoundAnswerList.contains(f.query.originalQuery)) {
+        f :: queryToFoundAnswerList(f.query.originalQuery)
+      } else {
+        List(f)
+      }
+      queryToFoundAnswerList.put(f.query.originalQuery, newAnswers)
       sendAnswerIfPossible(f.query)
     case _      ⇒ log.info("received unknown message")
   }
