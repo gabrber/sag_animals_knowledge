@@ -50,26 +50,6 @@ class KnowledgeAgentAFS extends KnowledgeAgent {
     case LearnAbout(animal: String) =>
       learn(animal)
       animalsLearnedAbout = animal :: animalsLearnedAbout
-      println("AFS learning about " + animal)
-      val animalUrl = if (animal.toLowerCase == "dog")
-          baseUrl + "All-About-Dogs.html"
-        else baseUrl + animal.capitalize + "-facts.html"
-
-      println(animalUrl)
-      if (checkUrlExists(animalUrl)) {
-        getTables(animalUrl,animal)
-        val pageContent = fetchContent(animalUrl)
-        persistAsBagOfWords(pageContent, animal, bag_of_words)
-        persistAsNERTokens(pageContent, animal, ner)
-        persistAsPosNgrams(pageContent, animal, pos_ngrams)
-        persistAsSentences(pageContent, animal, sentences)
-        persistAsLemmaSentences(sentences, animal, lemmaSentences)
-        persistAsChunker(pageContent, animal, chunker)
-
-
-        persistAnimalsLearnedAbout(animalsLearnedAbout, learned_animals)
-        println("AFS has learned about " + animal)
-      } else { log.info("Cannot find info about " + animal)}
       context.setReceiveTimeout(1 minute)
       askForAnimalToLearnAbout()
 
