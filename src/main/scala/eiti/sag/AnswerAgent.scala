@@ -26,7 +26,7 @@ class AnswerAgent extends Actor {
     } else {
       val answer = answers.sortBy(_.percentSure).last.answer
       println("Found answer: " + answer)
-      context.actorSelection("akka://AnimalsKnowsledgeBase/user/SystemUserAgent1") ! "mainMenu"
+      context.actorSelection("akka://AnimalsKnowledgeBase/user/SystemUserAgent1") ! "mainMenu"
     }
   }
 
