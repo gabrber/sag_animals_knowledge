@@ -178,7 +178,7 @@ abstract class KnowledgeAgent extends Actor {
     })
 
     if(locations.isEmpty) {
-      sendAnswer(usersQueryInstance, "Sorry, cant answer", 1)
+      sendAnswer(usersQueryInstance, "Sorry, cant answer", -1)
     } else {
       val mostCertainLocation = locations.maxBy(_._2)._1
       sendAnswer(usersQueryInstance, mostCertainLocation, 1)
