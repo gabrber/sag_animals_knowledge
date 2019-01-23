@@ -7,7 +7,8 @@ import java.util
 import akka.actor.Actor
 import akka.event.Logging
 import akka.util.Timeout
-import eiti.sag.knowledge_agents.KnowledgeAgent.FetchedAlreadyLearnedAnimals
+import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
+import eiti.sag.meta_knowledge_agents.MetaKnowledgeAgentsSupervisor.AskForAnimalSpecies
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 import opennlp.tools.lemmatizer.LemmatizerME
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
@@ -356,10 +357,15 @@ abstract class KnowledgeAgent extends Actor {
   override def postRestart(reason: Throwable): Unit = {
     println("Agent restarted")
     self ! FetchedAlreadyLearnedAnimals()
+    self ! LearnAbout("white shark")
   }
 
   def kaboom() = {
     1 / 0
+  }
+
+  def askForAnimalToLearnAbout() = {
+    context.actorSelection("../MetaKnowledgeAgentsSupervisor") ! AskForAnimalSpecies(animalsLearnedAbout)
   }
 }
 

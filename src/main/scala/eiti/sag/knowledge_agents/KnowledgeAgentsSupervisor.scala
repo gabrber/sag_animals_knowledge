@@ -26,7 +26,7 @@ class KnowledgeAgentsSupervisor extends Actor {
   }
 
   override def receive: Receive = {
-    case StartLearning(animals) => startLearning(animals)
+    case StartLearning() => startLearning()
     case q: UsersQueryInstance => askAQuestion(q)
     case InitAgents() => initAgents()
     case Kaboom => killSomeAgentAtRandom()
@@ -48,17 +48,16 @@ class KnowledgeAgentsSupervisor extends Actor {
     }
   }
 
-  def startLearning(animals: List[String]): Unit = {
+  def startLearning(): Unit = {
+    val system = ActorSystem(MainApp.AnimalsKnowledgeSystemName)
 
     val KnowledgeAgentAFS = context.system. actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentAFS")
     val KnowledgeAgentWikipedia = context.system.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentWikipedia")
     val KnowledgeAgentWWF = context.system.actorSelection("akka://AnimalsKnowledgeBase/user/KnowledgeAgentWWF")
 
-    for (elem <- animals) {
-      KnowledgeAgentAFS ! LearnAbout(elem)
-      KnowledgeAgentWikipedia ! LearnAbout(elem)
-      KnowledgeAgentWWF ! LearnAbout(elem)
-    }
+    KnowledgeAgentAFS ! LearnAbout("giraffe")
+    KnowledgeAgentWikipedia ! LearnAbout("giraffe")
+    KnowledgeAgentWWF ! LearnAbout("giraffe")
   }
 
   def askAQuestion(userQuery: UsersQueryInstance): Unit = {
@@ -81,7 +80,7 @@ object KnowledgeAgentsSupervisor {
   val AgentName: String = "KnowledgeAgentsSupervisor"
   val FullAgentPath: String = "akka://" + MainApp.AnimalsKnowledgeSystemName +  "/user/" + AgentName
 
-  final case class StartLearning(animals: List[String] = List("tiger", "koala", "spider", "parrot"))
+  final case class StartLearning()
   final case class InitAgents()
   final case class KillAgent(name: String)
 }

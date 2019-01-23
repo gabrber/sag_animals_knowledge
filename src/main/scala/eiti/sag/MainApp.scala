@@ -31,7 +31,7 @@ object MainApp extends App {
     println("learning")
     knowledgeAgentsSupervisor ! InitAgents()
     knowledgeAgentsSupervisor ! StartLearning()
-    metaKnowledgeAgentsSupervisor ! "fetch"
+    metaKnowledgeAgentsSupervisor ! "start"
   }
 
   if(mode == Mode.Explore) {

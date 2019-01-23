@@ -8,6 +8,7 @@ import akka.pattern.ask
 import scala.concurrent.duration._
 import eiti.sag.HttpServer.Kaboom
 import eiti.sag.knowledge_agents.KnowledgeAgent.{FetchedAlreadyLearnedAnimals, LearnAbout}
+import eiti.sag.knowledge_agents.KnowledgeAgentsSupervisor.StartLearning
 import eiti.sag.query.{QueryType, UsersQueryInstance}
 
 import scala.concurrent.Await
@@ -37,10 +38,10 @@ class KnowledgeAgentWikipedia extends KnowledgeAgent {
   override def receive = {
     case Kaboom => kaboom()
     case FetchedAlreadyLearnedAnimals() => fetchAlreadLearnedAnimals(learned_animals)
-
     case LearnAbout(animal: String) =>
       learn(animal)
       context.setReceiveTimeout(1 minute)
+      askForAnimalToLearnAbout()
 
     case usersQueryInstance: UsersQueryInstance =>
       if (!animalsLearnedAbout.contains(usersQueryInstance.animal)) {
